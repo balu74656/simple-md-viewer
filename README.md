@@ -1,13 +1,40 @@
 # MD Viewer
 
+[![nejnovější verze](https://img.shields.io/github/v/release/balu74656/simple-md-viewer?label=ke%20sta%C5%BEen%C3%AD&color=2563eb)](https://github.com/balu74656/simple-md-viewer/releases/latest)
+[![check](https://github.com/balu74656/simple-md-viewer/actions/workflows/check.yml/badge.svg)](https://github.com/balu74656/simple-md-viewer/actions/workflows/check.yml)
+
 Jednoduchý Markdown viewer/editor pro Windows. Postavený na **Tauri 2** (WebView2),
 takže se registruje jako nativní aplikace pro `.md` soubory a jde nastavit jako výchozí.
 
-Po otevření souboru se dokument zobrazí v režimu **View**.
+Zobrazí Mermaid i PlantUML diagramy, matematiku, zvýrazní syntaxi — a hlavně to
+otevře na dvojklik, bez editoru a bez pluginů. Instalátor má ~4 MB, WebView2 je
+ve Windows 11 už součástí systému.
+
+![MD Viewer v režimu Split s osnovou a Mermaid diagramy](docs/screenshot.png)
+
+## ⬇ Stáhnout
+
+**[Nejnovější instalátor →](https://github.com/balu74656/simple-md-viewer/releases/latest)**
+(`MD.Viewer_x.y.z_x64-setup.exe`, Windows x64)
+
+1. Stáhni a spusť. Instalátor **není podepsaný certifikátem**, takže SmartScreen
+   upozorní na neznámého vydavatele — **Další informace → Přesto spustit**.
+2. Nastavení výchozí aplikace: pravý klik na libovolný `.md` → **Otevřít v programu**
+   → **Zvolit jinou aplikaci** → *MD Viewer* → zaškrtnout **Vždy používat tuto aplikaci**.
+3. Pokud chceš PlantUML diagramy, doplň si v **Nastavení** URL svého PlantUML
+   serveru. Stažený instalátor žádnou předvyplněnou nemá — zdroj diagramu se na
+   ten server odesílá, takže pro interní dokumentaci nepoužívej veřejnou instanci.
+
+Aplikace běží na Windows 10 i 11. Starší verze a seznam změn jsou
+v [Releases](https://github.com/balu74656/simple-md-viewer/releases)
+a [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## Build
+## Build ze zdrojáků
+
+Potřebuješ jen když chceš měnit kód nebo sestavit verzi s předvyplněným
+PlantUML serverem. Na běžné používání stačí instalátor výše.
 
 ### Jednorázová příprava prostředí
 
