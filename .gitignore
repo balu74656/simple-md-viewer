@@ -1,0 +1,18 @@
+node_modules/
+dist/
+dist-dbg/
+src-tauri/target/
+src-tauri/gen/
+
+# Lokální konfigurace — interní URL nepatří do repozitáře
+.env
+.env.local
+.env.*.local
+
+*.log
+.DS_Store
+Thumbs.db
+dbg*.mjs
+
+# Prezentace projektu - do repozitare nepatri
+md-viewer-prezentace.html

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MD Viewer</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232563eb'/%3E%3Ctext x='16' y='22' font-family='sans-serif' font-size='15' font-weight='700' fill='white' text-anchor='middle'%3EMD%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <header id="toolbar">
+        <button id="btn-open" class="icon-btn" title="Otevřít (Ctrl+O)">Otevřít</button>
+        <button id="btn-save" class="icon-btn" title="Uložit (Ctrl+S)" disabled>Uložit</button>
+
+        <div id="mode-switch" role="group" aria-label="Režim zobrazení">
+          <button data-mode="view" title="Náhled (Ctrl+E)">View</button>
+          <button data-mode="split" title="Split (Ctrl+\)">Split</button>
+          <button data-mode="edit" title="Editor (Ctrl+E)">Edit</button>
+        </div>
+
+        <span id="filename" title="">(žádný soubor)</span>
+
+        <span class="spacer"></span>
+
+        <button id="btn-toc" class="icon-btn" title="Osnova (Ctrl+Shift+O)">Osnova</button>
+        <button id="btn-find" class="icon-btn" title="Hledat (Ctrl+F)">Hledat</button>
+        <button id="btn-theme" class="icon-btn" title="Přepnout motiv">Motiv</button>
+        <button id="btn-settings" class="icon-btn" title="Nastavení">Nastavení</button>
+      </header>
+
+      <div id="tabbar" hidden>
+        <div id="tab-list" role="tablist" aria-label="Otevřené dokumenty"></div>
+        <button id="btn-newtab" type="button" title="Nový tab (Ctrl+T)" aria-label="Nový tab">+</button>
+      </div>
+
+      <div id="findbar" hidden>
+        <input id="find-input" type="text" placeholder="Hledat…" spellcheck="false" />
+        <span id="find-count">0/0</span>
+        <button id="find-prev" title="Předchozí (Shift+Enter)">&#8593;</button>
+        <button id="find-next" title="Další (Enter)">&#8595;</button>
+        <button id="find-close" title="Zavřít (Esc)">&#10005;</button>
+      </div>
+
+      <main id="workspace" data-mode="view">
+        <aside id="toc" hidden>
+          <div class="toc-title">Osnova</div>
+          <nav id="toc-list"></nav>
+        </aside>
+        <div id="edit-pane">
+          <div id="editor"></div>
+        </div>
+        <!-- Uzly nahledu jednotlivych tabu se sem vkladaji za behu -->
+        <div id="view-pane"></div>
+      </main>
+
+      <footer id="status">
+        <span id="status-left"></span>
+        <span class="spacer"></span>
+        <span id="status-right"></span>
+      </footer>
+    </div>
+
+    <dialog id="settings-dialog">
+      <form method="dialog">
+        <h2>Nastavení</h2>
+
+        <label>
+          PlantUML server
+          <input id="set-puml" type="url" placeholder="https://plantuml.example.com" />
+          <small>Kořenová URL serveru. Prázdné = PlantUML bloky se nerenderují.</small>
+        </label>
+
+        <label>
+          Formát PlantUML
+          <select id="set-puml-format">
+            <option value="svg">SVG</option>
+            <option value="png">PNG</option>
+          </select>
+        </label>
+
+        <label>
+          Výchozí režim po otevření
+          <select id="set-mode">
+            <option value="view">View</option>
+            <option value="split">Split</option>
+            <option value="edit">Edit</option>
+          </select>
+        </label>
+
+        <label class="checkbox">
+          <input id="set-wrap" type="checkbox" />
+          Zalamovat dlouhé řádky v editoru
+          <small>Vypnuto = dlouhé řádky se posouvají vodorovně, vhodné pro tabulky.</small>
+        </label>
+
+        <label>
+          Motiv
+          <select id="set-theme">
+            <option value="auto">Podle systému</option>
+            <option value="light">Světlý</option>
+            <option value="dark">Tmavý</option>
+          </select>
+        </label>
+
+        <div class="dialog-actions">
+          <button value="cancel">Zrušit</button>
+          <button id="set-save" value="save" class="primary">Uložit</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

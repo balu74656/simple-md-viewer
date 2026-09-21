@@ -1,0 +1,29 @@
+name: check
+
+# Rychlá kontrola frontendu při každém pushi. Rust se tu nestaví —
+# na to je release workflow, kompilace by zdržovala o minuty.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typová kontrola
+        run: npx tsc --noEmit
+
+      - name: Build frontendu
+        run: npx vite build

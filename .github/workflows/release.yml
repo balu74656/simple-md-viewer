@@ -1,0 +1,58 @@
+name: release
+
+# Instalátor se staví z tagu. Postup vydání:
+#   npm run set-version 0.3.1
+#   git commit -am "0.3.1" && git tag v0.3.1 && git push --follow-tags
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # Bez cache trvá kompilace Rustu ~7 minut, s cache ~2
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - run: npm ci
+
+      # Typová kontrola zvlášť, ať je při chybě hned jasné, co selhalo
+      - run: npx tsc --noEmit
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # VITE_PLANTUML_SERVER zde záměrně chybí — veřejný instalátor
+          # startuje s prázdným polem a server se doplní v Nastavení.
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: MD Viewer ${{ github.ref_name }}
+          releaseBody: |
+            Instalátor pro Windows x64.
+
+            Není podepsaný certifikátem, takže SmartScreen při první instalaci
+            upozorní na neznámého vydavatele — **Další informace → Přesto spustit**.
+
+            Po instalaci: pravý klik na `.md` → Otevřít v programu → MD Viewer
+            → Vždy používat tuto aplikaci.
+
+            Změny v [CHANGELOG.md](https://github.com/balu74656/simple-md-viewer/blob/main/CHANGELOG.md).
+          releaseDraft: false
+          prerelease: false
