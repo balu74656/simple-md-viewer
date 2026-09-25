@@ -1,6 +1,6 @@
 [package]
 name = "md-viewer"
-version = "0.3.0"
+version = "0.3.1"
 description = "Jednoduchy Markdown viewer a editor"
 authors = ["Luke"]
 edition = "2021"

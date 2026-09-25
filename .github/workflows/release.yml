@@ -1,6 +1,6 @@
 name: release
 
-# Instalátor se staví z tagu. Postup vydání:
+# Instalator se stavi z tagu, zvlast pro x64 a ARM64. Postup vydani:
 #   npm run set-version 0.3.1
 #   git commit -am "0.3.1" && git tag v0.3.1 && git push --follow-tags
 on:
@@ -13,8 +13,23 @@ permissions:
   contents: write
 
 jobs:
-  windows:
-    runs-on: windows-latest
+  build:
+    name: ${{ matrix.arch }}
+
+    strategy:
+      # Oba joby zakladaji tentyz Release. Paralelne by se o nej prali,
+      # serazene za sebou druhy jen prida svuj instalator k existujicimu.
+      max-parallel: 1
+      # Kdyz spadne ARM, x64 instalator at je stejne k dispozici.
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            arch: x64
+          - runner: windows-11-arm
+            arch: arm64
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - uses: actions/checkout@v4
@@ -26,28 +41,35 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      # Bez cache trvá kompilace Rustu ~7 minut, s cache ~2
+      # Cache je per architektura, jinak by si joby prepisovaly artefakty
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          key: ${{ matrix.arch }}
 
       - run: npm ci
 
-      # Typová kontrola zvlášť, ať je při chybě hned jasné, co selhalo
+      # Typova kontrola zvlast, at je pri chybe hned jasne, co selhalo
       - run: npx tsc --noEmit
 
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # VITE_PLANTUML_SERVER zde záměrně chybí — veřejný instalátor
-          # startuje s prázdným polem a server se doplní v Nastavení.
+          # VITE_PLANTUML_SERVER zde zamerne chybi - verejny instalator
+          # startuje s prazdnym polem a server se doplni v Nastaveni.
         with:
           tagName: ${{ github.ref_name }}
           releaseName: MD Viewer ${{ github.ref_name }}
           releaseBody: |
-            Instalátor pro Windows x64.
+            Instalátory pro Windows — vyber podle architektury procesoru:
 
-            Není podepsaný certifikátem, takže SmartScreen při první instalaci
+            - **x64** (Intel / AMD) — `MD.Viewer_*_x64-setup.exe`
+            - **ARM64** (Snapdragon a spol.) — `MD.Viewer_*_arm64-setup.exe`
+
+            Když si nejsi jistý, v PowerShellu: `$env:PROCESSOR_ARCHITECTURE`
+            → `AMD64` = x64, `ARM64` = ARM64.
+
+            Instalátory nejsou podepsané certifikátem, takže SmartScreen
             upozorní na neznámého vydavatele — **Další informace → Přesto spustit**.
 
             Po instalaci: pravý klik na `.md` → Otevřít v programu → MD Viewer

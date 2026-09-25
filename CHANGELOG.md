@@ -6,6 +6,20 @@ verzování ze [semver](https://semver.org/lang/cs/).
 Historie Gitu začíná u 0.3.0 — starší verze jsou zaznamenané zpětně,
 jejich zdrojový kód v repozitáři není.
 
+## [0.3.1]
+
+### Přidáno
+
+- **Nativní instalátor pro ARM Windows.** Release workflow staví matici dvou
+  architektur — x64 na `windows-latest`, ARM64 nativně na `windows-11-arm`.
+  Bez cross-compilace, takže odpadá ARM64 komponenta v MSVC i `rustup target add`.
+  Joby běží sériově, aby se nepraly o tentýž Release.
+
+### Změněno
+
+- README a popis vydání rozlišují x64 a ARM64 včetně toho, jak zjistit,
+  co má člověk za procesor.
+
 ## [0.3.0]
 
 ### Přidáno

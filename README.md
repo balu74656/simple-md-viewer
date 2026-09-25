@@ -15,7 +15,16 @@ ve Windows 11 už součástí systému.
 ## ⬇ Stáhnout
 
 **[Nejnovější instalátor →](https://github.com/balu74656/simple-md-viewer/releases/latest)**
-(`MD.Viewer_x.y.z_x64-setup.exe`, Windows x64, ~4 MB)
+(Windows 10 a 11, ~4 MB)
+
+| Procesor | Soubor |
+|---|---|
+| Intel / AMD | `MD.Viewer_x.y.z_x64-setup.exe` |
+| ARM (Snapdragon a spol.) | `MD.Viewer_x.y.z_arm64-setup.exe` |
+
+Nevíš, co máš? V PowerShellu `$env:PROCESSOR_ARCHITECTURE` — `AMD64` je x64,
+`ARM64` je ARM. Oba buildy jsou nativní, x64 verze by na ARM sice běžela přes
+emulaci, ale pomaleji a s vyšší spotřebou.
 
 Instalátor **není podepsaný certifikátem**, takže SmartScreen při prvním spuštění
 upozorní na neznámého vydavatele — **Další informace → Přesto spustit**.
@@ -24,7 +33,7 @@ Po instalaci si aplikaci [nastav jako výchozí pro `.md`](#nastavení-jako-výc
 Pro PlantUML diagramy ještě doplň v **Nastavení** URL svého serveru — stažený
 instalátor žádnou předvyplněnou nemá.
 
-Aplikace běží na Windows 10 i 11. Starší verze a seznam změn jsou
+Starší verze a seznam změn jsou
 v [Releases](https://github.com/balu74656/simple-md-viewer/releases)
 a [CHANGELOG.md](CHANGELOG.md).
 
