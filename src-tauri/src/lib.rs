@@ -117,9 +117,13 @@ async fn plantuml_check(url: String) -> Result<Option<PlantUmlError>, String> {
     let Some(message) = header("X-PlantUML-Diagram-Error") else {
         return Ok(None);
     };
-    let line = header("X-PlantUML-Diagram-Error-Line")
+    let pos: u32 = header("X-PlantUML-Diagram-Error-Line")
         .and_then(|l| l.trim().parse().ok())
-        .unwrap_or(1);
+        .unwrap_or(0);
+    // plantuml-server (Jetty/Tomcat, i plantuml.com) posila pozici od 0,
+    // PicoWeb vestaveny v plantuml.jar (-picoweb) od 1.
+    let picoweb = header("Server").is_some_and(|s| s.contains("PicoWeb"));
+    let line = if picoweb { pos.max(1) } else { pos + 1 };
     Ok(Some(PlantUmlError { line, message }))
 }
 

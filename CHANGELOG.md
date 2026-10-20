@@ -6,6 +6,15 @@ verzování ze [semver](https://semver.org/lang/cs/).
 Historie Gitu začíná u 0.3.0 — starší verze jsou zaznamenané zpětně,
 jejich zdrojový kód v repozitáři není.
 
+## [0.5.1]
+
+### Opraveno
+
+- **Kontrola syntaxe PlantUML označovala o řádek výš.** plantuml-server
+  (běžná firemní instalace i plantuml.com) posílá číslo chybného řádku od 0,
+  PicoWeb z `plantuml.jar` od 1. Aplikace teď rozliší server podle hlavičky
+  `Server` a značka sedí na správném řádku u obou.
+
 ## [0.5.0]
 
 ### Přidáno
