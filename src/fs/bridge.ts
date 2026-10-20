@@ -16,6 +16,8 @@ export interface LoadedFile {
   lossy: boolean;
 }
 
+import { docKind, MARKDOWN_EXTENSIONS, PLANTUML_EXTENSIONS } from '../doctype';
+
 export const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 /* ------------------------------------------------------------------ */
@@ -65,7 +67,11 @@ export async function pickOpenPath(): Promise<string | null> {
     const selected = await open({
       multiple: false,
       directory: false,
-      filters: [{ name: 'Markdown', extensions: ['md', 'markdown', 'mdown', 'mkd', 'txt'] }],
+      filters: [
+        { name: 'Markdown a PlantUML', extensions: [...MARKDOWN_EXTENSIONS, ...PLANTUML_EXTENSIONS] },
+        { name: 'Markdown', extensions: MARKDOWN_EXTENSIONS },
+        { name: 'PlantUML', extensions: PLANTUML_EXTENSIONS },
+      ],
     });
     return typeof selected === 'string' ? selected : null;
   }
@@ -77,7 +83,12 @@ export async function pickOpenPath(): Promise<string | null> {
   }).showOpenFilePicker;
   const [handle] = await picker({
     multiple: false,
-    types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md', '.markdown'] } }],
+    types: [
+      {
+        description: 'Markdown a PlantUML',
+        accept: { 'text/plain': [...MARKDOWN_EXTENSIONS, ...PLANTUML_EXTENSIONS].map((e) => `.${e}`) },
+      },
+    ],
   });
   if (!handle) return null;
   webHandles.set(handle.name, handle);
@@ -85,11 +96,15 @@ export async function pickOpenPath(): Promise<string | null> {
 }
 
 export async function pickSavePath(defaultPath?: string): Promise<string | null> {
+  // Prvni filtr je ve Windows dialogu predvoleny - at odpovida ukladanemu souboru
+  const puml = docKind(defaultPath ?? null) === 'plantuml';
   if (isTauri) {
     const { save } = await import('@tauri-apps/plugin-dialog');
+    const md = { name: 'Markdown', extensions: ['md', 'markdown'] };
+    const uml = { name: 'PlantUML', extensions: PLANTUML_EXTENSIONS };
     const selected = await save({
       defaultPath,
-      filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
+      filters: puml ? [uml, md] : [md, uml],
     });
     return selected ?? null;
   }
@@ -99,7 +114,11 @@ export async function pickSavePath(defaultPath?: string): Promise<string | null>
   }).showSaveFilePicker;
   const handle = await picker({
     suggestedName: defaultPath ?? 'dokument.md',
-    types: [{ description: 'Markdown', accept: { 'text/markdown': ['.md'] } }],
+    types: [
+      puml
+        ? { description: 'PlantUML', accept: { 'text/plain': PLANTUML_EXTENSIONS.map((e) => `.${e}`) } }
+        : { description: 'Markdown', accept: { 'text/markdown': ['.md'] } },
+    ],
   });
   webHandles.set(handle.name, handle);
   return handle.name;
@@ -115,7 +134,7 @@ export async function takePendingFile(): Promise<string | null> {
   return await invoke<string | null>('take_pending_file');
 }
 
-/** Druhe spusteni appky (dvojklik na dalsi .md) posle cestu sem. */
+/** Druhe spusteni appky (dvojklik na dalsi .md/.puml) posle cestu sem. */
 export async function onOpenFile(cb: (path: string) => void): Promise<void> {
   if (!isTauri) return;
   const { listen } = await import('@tauri-apps/api/event');

@@ -1,6 +1,7 @@
 import './styles.css';
 
-import { renderMarkdown } from './render/markdown';
+import { renderMarkdown, renderPlantUmlFile } from './render/markdown';
+import { docKind } from './doctype';
 import { postProcess, resetMermaidTheme, type RenderToken } from './render/postprocess';
 import {
   closeWindow,
@@ -172,7 +173,8 @@ async function render(): Promise<void> {
   const t0 = performance.now();
 
   try {
-    const { html, blocks } = renderMarkdown(source);
+    const { html, blocks } =
+      docKind(tab.path) === 'plantuml' ? renderPlantUmlFile(source) : renderMarkdown(source);
     if (token.cancelled) return;
     target.innerHTML = html;
     renderedFor.set(tab, source);
@@ -334,6 +336,8 @@ async function saveFile(saveAs = false): Promise<void> {
     target = await pickSavePath(target ?? 'dokument.md');
     if (!target) return;
   }
+  // "Ulozit jako" muze zmenit priponu a tim i druh dokumentu
+  const kindChanged = docKind(target) !== docKind(tab.path);
 
   try {
     const content = editor.getValue();
@@ -342,6 +346,7 @@ async function saveFile(saveAs = false): Promise<void> {
     tab.savedContent = content;
     setDirty(tab, false);
     tabs.renderBar();
+    if (kindChanged) void render();
     statusLeft.textContent = `Uloženo ${new Date().toLocaleTimeString('cs-CZ')}`;
   } catch (e) {
     statusLeft.textContent = `Uložení selhalo: ${String(e)}`;
@@ -509,7 +514,8 @@ onSystemThemeChange(() => {
 const WELCOME = `# MD Viewer
 
 Otevři soubor přes **Otevřít** (\`Ctrl+O\`), nebo si aplikaci nastav ve Windows
-jako výchozí pro \`.md\` soubory a otevírej je dvojklikem.
+jako výchozí pro \`.md\` soubory a otevírej je dvojklikem. Samostatné PlantUML
+soubory (\`.puml\`, \`.plantuml\`, \`.pu\`, \`.iuml\`) se zobrazí rovnou jako diagram.
 
 ## Klávesové zkratky
 

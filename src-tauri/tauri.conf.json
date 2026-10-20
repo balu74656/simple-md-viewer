@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "MD Viewer",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "identifier": "io.github.balu74656.mdviewer",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -42,6 +42,13 @@
         "description": "Markdown dokument",
         "role": "Editor",
         "mimeType": "text/markdown"
+      },
+      {
+        "ext": ["puml", "plantuml", "pu", "iuml"],
+        "name": "PlantUML Diagram",
+        "description": "PlantUML diagram",
+        "role": "Editor",
+        "mimeType": "text/plain"
       }
     ],
     "windows": {

@@ -191,6 +191,27 @@ const PURIFY_CONFIG = {
   FORBID_ATTR: ['onerror', 'onload', 'onclick', 'srcdoc', 'formaction', 'name'],
 };
 
+/**
+ * Samostatny PlantUML soubor -> jeden placeholder na kazdy par @startX/@endX.
+ * Server vykresli z jednoho zdroje jen prvni diagram, proto se soubor deli.
+ * Soubor bez @start znacek jde cely jako jeden diagram (plantUmlUrl ho obali).
+ */
+export function renderPlantUmlFile(source: string): RenderResult {
+  blocks = new Map();
+  blockSeq = 0;
+
+  const diagrams = Array.from(
+    source.matchAll(/^[ \t]*@start(\w+)\b[\s\S]*?^[ \t]*@end\1\b.*$/gm),
+    (m) => m[0],
+  );
+  if (diagrams.length === 0 && source.trim()) diagrams.push(source);
+
+  const html = diagrams
+    .map((d) => `<div class="deferred puml-placeholder" data-block="${defer('plantuml', d)}"></div>`)
+    .join('\n');
+  return { html, blocks };
+}
+
 /** Markdown -> bezpecny HTML + mapa odlozenych bloku k dorenderovani. */
 export function renderMarkdown(source: string): RenderResult {
   installHooks();

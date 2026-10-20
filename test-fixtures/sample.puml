@@ -1,0 +1,24 @@
+@startuml prihlaseni
+title Přihlášení přes gateway
+autonumber
+
+actor "Uživatel" as user
+participant "gateway" as gw
+participant "auth\nservice" as auth
+
+user -[#green]> gw : POST /v1/login
+gw -> auth : ověření
+alt platné údaje
+  auth --> gw : 200 token
+  gw --> user : 200
+else chyba
+  auth --> gw : 401
+  gw --> user : 401
+end
+@enduml
+
+@startuml stavy
+[*] --> Nový
+Nový --> Ověřený : verdikt
+Ověřený --> [*]
+@enduml
