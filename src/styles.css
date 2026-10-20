@@ -807,6 +807,467 @@ button.primary {
 }
 
 /* ==================================================================
+   OpenAPI / Swagger nahled
+   Barvy metod jako ve Swagger UI; poloprusvitne pozadi funguje
+   v obou motivech bez color-mix().
+   ================================================================== */
+
+.markdown-body:has(> .oa) {
+  max-width: 1100px;
+}
+
+.oa {
+  --oa-get: 97, 175, 254;
+  --oa-post: 73, 204, 144;
+  --oa-put: 252, 161, 48;
+  --oa-delete: 249, 62, 62;
+  --oa-patch: 80, 227, 194;
+  --oa-head: 144, 18, 254;
+  --oa-options: 13, 90, 167;
+  --oa-trace: 120, 120, 120;
+}
+
+.oa summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.oa summary::-webkit-details-marker {
+  display: none;
+}
+
+.oa-head h1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 0;
+}
+
+.oa-badge {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 10px;
+  color: #fff;
+  background: #7d8492;
+  vertical-align: middle;
+}
+
+.oa-badge-oas {
+  background: #89bf04;
+}
+
+.oa-label,
+.oa-subhead,
+.oa-section-head {
+  font-weight: 600;
+}
+
+.oa-servers ul {
+  margin: 4px 0 0;
+}
+
+.oa-muted {
+  color: var(--fg-muted);
+  font-size: 0.9em;
+}
+
+.oa-warn {
+  color: var(--danger);
+}
+
+.oa-md > :first-child {
+  margin-top: 0;
+}
+
+.oa-md > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---- tagy a velke sekce ---- */
+
+.oa-tag {
+  margin: 1.4em 0 0.6em;
+}
+
+.oa-tag > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  padding: 4px 0;
+}
+
+.oa-tag > summary h2 {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  font-size: 1.4em;
+}
+
+.oa-tag > summary::after {
+  content: '▾';
+  margin-left: auto;
+  color: var(--fg-muted);
+  transition: transform 0.15s;
+}
+
+.oa-tag:not([open]) > summary::after {
+  transform: rotate(-90deg);
+}
+
+.oa-tag-desc {
+  color: var(--fg-muted);
+  font-size: 0.9em;
+}
+
+.oa-ops {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* ---- operace ---- */
+
+.oa-op {
+  --m: var(--oa-trace);
+  border: 1px solid rgb(var(--m));
+  background: rgba(var(--m), 0.1);
+  border-radius: 4px;
+}
+
+.oa-m-get { --m: var(--oa-get); }
+.oa-m-post { --m: var(--oa-post); }
+.oa-m-put { --m: var(--oa-put); }
+.oa-m-delete { --m: var(--oa-delete); }
+.oa-m-patch { --m: var(--oa-patch); }
+.oa-m-head { --m: var(--oa-head); }
+.oa-m-options { --m: var(--oa-options); }
+
+.oa-op > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  min-height: 36px;
+}
+
+.oa-op[open] > summary {
+  border-bottom: 1px solid rgb(var(--m));
+}
+
+.oa-op > summary::after {
+  content: '▾';
+  color: var(--fg-muted);
+  margin-left: 4px;
+  transform: rotate(-90deg);
+  transition: transform 0.15s;
+}
+
+.oa-op[open] > summary::after {
+  transform: none;
+}
+
+.oa-method {
+  flex: none;
+  min-width: 72px;
+  padding: 5px 0;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: rgb(var(--m));
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.oa-path {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.oa-deprecated .oa-path {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.oa-summary {
+  color: var(--fg-muted);
+  font-size: 13px;
+  flex: 1;
+  min-width: 0;
+}
+
+.oa-lock {
+  margin-left: auto;
+}
+
+.oa-path:last-child,
+.oa-path + .oa-lock {
+  margin-right: 0;
+}
+
+.oa-op > summary > .oa-path:nth-last-child(1) {
+  flex: 1;
+}
+
+.oa-lock {
+  display: inline-flex;
+  margin-left: auto;
+  color: var(--fg-muted);
+}
+
+.oa-op-body {
+  padding: 10px 16px 14px;
+  background: var(--bg);
+}
+
+.oa-section {
+  margin-top: 12px;
+}
+
+.oa-section-head {
+  margin: 0 -16px 8px;
+  padding: 6px 16px;
+  background: var(--bg-elev);
+  border-top: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.markdown-body .oa-table {
+  display: table;
+  width: 100%;
+  margin: 0.4em 0;
+}
+
+.markdown-body .oa-table td,
+.markdown-body .oa-table th {
+  vertical-align: top;
+  border-left: 0;
+  border-right: 0;
+}
+
+.markdown-body .oa-table tbody tr:nth-child(2n) {
+  background: none;
+}
+
+.oa-table td:first-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.oa-pname > div:first-child,
+.oa-prop-name {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.oa-in {
+  color: var(--fg-muted);
+  font-style: italic;
+  font-size: 0.85em;
+}
+
+.oa-req {
+  color: var(--danger);
+  margin-left: 2px;
+  font-weight: 700;
+}
+
+.oa-type {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  color: var(--hl-type);
+}
+
+.oa-format {
+  color: var(--fg-muted);
+}
+
+.oa-code {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.oa-code-ok { color: var(--hl-string); }
+.oa-code-err { color: var(--danger); }
+
+.oa-ref-error {
+  color: var(--danger);
+  font-size: 0.9em;
+}
+
+/* ---- media typ: Priklad / Schema ---- */
+
+.oa-media {
+  margin: 8px 0;
+}
+
+.oa-media-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.oa-tabs {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.oa-tabs button {
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 10px;
+  color: var(--fg-muted);
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.oa-media[data-view='example'] [data-tab='example'],
+.oa-media[data-view='schema'] [data-tab='schema'] {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+}
+
+.oa-media[data-view='example'] .oa-pane-schema,
+.oa-media[data-view='schema'] .oa-pane-example {
+  display: none;
+}
+
+.markdown-body .oa-pane pre.code-block {
+  margin: 6px 0;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.oa-ex-label {
+  margin-top: 6px;
+  font-size: 0.85em;
+  color: var(--fg-muted);
+}
+
+/* ---- strom schematu ---- */
+
+.oa-schema {
+  margin: 6px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  background: var(--bg-elev);
+}
+
+.oa-schema-type {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--hl-type);
+}
+
+.oa-props {
+  margin: 4px 0 4px 6px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+
+.oa-prop {
+  padding: 3px 0;
+}
+
+.oa-prop-head,
+.oa-sub > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.oa-sub > summary {
+  position: relative;
+}
+
+.oa-sub > summary::before {
+  content: '▸';
+  position: absolute;
+  left: -12px;
+  color: var(--fg-muted);
+}
+
+.oa-sub[open] > summary::before {
+  content: '▾';
+}
+
+.oa-sub > .oa-lazy-body {
+  margin-left: 2px;
+}
+
+.oa-comp {
+  margin-top: 4px;
+  font-size: 0.85em;
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+.oa-ref-name {
+  font-weight: 600;
+}
+
+/* ---- sekce Schemata ---- */
+
+.oa-model-list {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.oa-model {
+  background: var(--bg-elev);
+  border-radius: 4px;
+  scroll-margin-top: 12px;
+}
+
+.oa-model > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.oa-model > summary::after {
+  content: '›';
+  color: var(--fg-muted);
+}
+
+.oa-model[open] > summary::after {
+  transform: rotate(90deg);
+}
+
+.oa-model-name {
+  font-weight: 600;
+}
+
+.oa-model-desc {
+  color: var(--fg-muted);
+  font-size: 0.9em;
+}
+
+.oa-model > .oa-lazy-body {
+  padding: 0 14px 10px 24px;
+}
+
+.oa-model:target > summary {
+  outline: 2px solid var(--accent);
+}
+
+/* ==================================================================
    Dialog
    ================================================================== */
 

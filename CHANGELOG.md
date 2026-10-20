@@ -6,6 +6,23 @@ verzování ze [semver](https://semver.org/lang/cs/).
 Historie Gitu začíná u 0.3.0 — starší verze jsou zaznamenané zpětně,
 jejich zdrojový kód v repozitáři není.
 
+## [0.6.0]
+
+### Přidáno
+
+- **OpenAPI / Swagger náhled.** Soubory `.yaml`, `.yml` a `.json` se
+  specifikací OpenAPI 3.0/3.1 nebo Swagger 2.0 se v náhledu zobrazí jako
+  dokumentace ve stylu Swagger UI (jen ke čtení): operace podle tagů,
+  rozbalovací detail s parametry, tělem požadavku a odpověďmi, přepínač
+  Příklad / Schéma, sekce Autorizace a Schémata. Klik na název schématu
+  skočí na jeho definici.
+- **Externí `$ref`.** Odkazy do jiných souborů (`common.yaml#/...`) se
+  načtou relativně k souboru, ve kterém stojí.
+- **Zvýraznění YAML a JSON v editoru.** Při psaní ve Split režimu zůstane
+  rozbalené, co bylo rozbalené; rozbitý OpenAPI soubor ukáže chybu s číslem
+  řádku. Jiný YAML/JSON se v náhledu zobrazí jako zvýrazněný kód.
+- Asociace `.yaml`, `.yml` a `.json` s aplikací v instalátoru.
+
 ## [0.5.1]
 
 ### Opraveno

@@ -3,6 +3,7 @@ import './styles.css';
 import { renderMarkdown, renderPlantUmlFile } from './render/markdown';
 import { docKind } from './doctype';
 import { postProcess, resetMermaidTheme, type RenderToken } from './render/postprocess';
+import { captureOpenState, hydrateOpenApi, renderDataFile, restoreOpenState } from './render/openapi';
 import {
   closeWindow,
   confirmDiscard,
@@ -85,6 +86,8 @@ const tabs: TabsController = createTabs({
 
 /** Obsah, pro ktery je nahled tabu aktualni. */
 const renderedFor = new WeakMap<Tab, string>();
+/** Rozbalene bloky OpenAPI nahledu - preziji i docasne rozbity YAML pri psani. */
+const openApiState = new WeakMap<Tab, Map<string, boolean>>();
 
 let renderToken: RenderToken = { cancelled: false };
 let renderTimer: number | undefined;
@@ -180,8 +183,32 @@ async function render(): Promise<void> {
   const t0 = performance.now();
 
   try {
-    const { html, blocks } =
-      docKind(tab.path) === 'plantuml' ? renderPlantUmlFile(source) : renderMarkdown(source);
+    const kind = docKind(tab.path);
+    if (kind === 'yaml' || kind === 'json') {
+      const { html, lazy } = await renderDataFile(source, {
+        path: tab.path ?? '',
+        format: kind,
+        // Externi $ref se ctou z disku; v prohlizeci (vyvoj) cesty nejsou
+        read: isTauri ? async (p) => (await readFile(p)).content : undefined,
+      });
+      if (token.cancelled) return;
+      // Prekresleni pri psani nesmi zavrit, co mel uzivatel rozbalene
+      const captured = captureOpenState(target);
+      const open = captured.size ? captured : (openApiState.get(tab) ?? captured);
+      openApiState.set(tab, open);
+      target.innerHTML = html;
+      hydrateOpenApi(target, lazy);
+      restoreOpenState(target, open);
+      renderedFor.set(tab, source);
+      if (tabs.active() === tab) {
+        toc.rebuild(target);
+        find.refresh();
+      }
+      statusLeft.textContent = `render ${Math.round(performance.now() - t0)} ms`;
+      return;
+    }
+
+    const { html, blocks } = kind === 'plantuml' ? renderPlantUmlFile(source) : renderMarkdown(source);
     if (token.cancelled) return;
     target.innerHTML = html;
     renderedFor.set(tab, source);
@@ -566,7 +593,8 @@ const WELCOME = `# MD Viewer
 
 Otevři soubor přes **Otevřít** (\`Ctrl+O\`), nebo si aplikaci nastav ve Windows
 jako výchozí pro \`.md\` soubory a otevírej je dvojklikem. Samostatné PlantUML
-soubory (\`.puml\`, \`.plantuml\`, \`.pu\`, \`.iuml\`) se zobrazí rovnou jako diagram.
+soubory (\`.puml\`, \`.plantuml\`, \`.pu\`, \`.iuml\`) se zobrazí rovnou jako diagram,
+OpenAPI / Swagger specifikace (\`.yaml\`, \`.yml\`, \`.json\`) jako dokumentace API.
 
 ## Klávesové zkratky
 
@@ -591,6 +619,7 @@ soubory (\`.puml\`, \`.plantuml\`, \`.pu\`, \`.iuml\`) se zobrazí rovnou jako d
 - Mermaid diagramy
 - PlantUML přes vlastní server, s kontrolou syntaxe v editoru
 - Klik na diagram ho otevře se zoomem a posunem
+- OpenAPI 3.x a Swagger 2.0 ve stylu Swagger UI, včetně \`$ref\` do jiných souborů
 - Matematiku v \`$…$\` a \`$$…$$\`
 `;
 

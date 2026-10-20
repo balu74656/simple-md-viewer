@@ -1,0 +1,7 @@
+# Obyčejný YAML (ne OpenAPI) - náhled ho ukáže jako zvýrazněný kód
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: md-viewer
+spec:
+  replicas: 2

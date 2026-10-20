@@ -1,0 +1,211 @@
+openapi: 3.0.3
+info:
+  title: Document verification API
+  version: "9.0"
+  description: |
+    Ukázková specifikace pro náhled **OpenAPI** v MD Vieweru.
+    Odkazy na `common.yaml` testují externí `$ref`.
+  contact:
+    name: Integration team
+    email: integration@example.com
+servers:
+  - url: https://api.example.com/v9
+    description: Produkce
+  - url: https://test-api.example.com/v9
+tags:
+  - name: IdCard
+    description: Vytěžení občanského průkazu
+  - name: ZenId
+security:
+  - bearerAuth: []
+paths:
+  /onboarding/v9/device/ocr/investigate-document/{uploadSessionId}:
+    parameters:
+      - $ref: '#/components/parameters/UploadSessionId'
+    post:
+      tags: [IdCard]
+      summary: Vyhodnocení nahraného dokladu
+      operationId: investigateDocument
+      security: []
+      parameters:
+        - name: X-Correlation-Id
+          in: header
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: profile
+          in: query
+          description: Profil vyhodnocení
+          schema:
+            type: string
+            enum: [STRICT, LENIENT]
+            default: STRICT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvestigationRequest'
+      responses:
+        '200':
+          description: Výsledek vyhodnocení
+          headers:
+            X-Rate-Limit:
+              description: Zbývající počet volání
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestigationEvaluation'
+        '400':
+          $ref: 'common.yaml#/components/responses/BadRequest'
+        '404':
+          description: Session neexistuje
+          content:
+            application/json:
+              schema:
+                $ref: './common.yaml#/components/schemas/Error'
+  /gateway/v10/ocr/scan/identity-document:
+    post:
+      tags: [IdCard]
+      summary: Sken dokladu
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [front]
+              properties:
+                front:
+                  type: string
+                  format: binary
+                back:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Vytvořeno
+          content:
+            application/json:
+              examples:
+                ok:
+                  summary: Úspěšný sken
+                  value: { id: 42, status: DONE }
+  /pid-gateway/v9/zenid/investigate-document/{uploadSessionId}:
+    get:
+      tags: [ZenId]
+      deprecated: true
+      parameters:
+        - $ref: '#/components/parameters/UploadSessionId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EvaluationProfile'
+    delete:
+      tags: [ZenId]
+      summary: Smazání session
+      parameters:
+        - $ref: '#/components/parameters/UploadSessionId'
+      responses:
+        '204':
+          description: Smazáno
+  /health:
+    get:
+      summary: Healthcheck bez tagu
+      security: []
+      responses:
+        '200':
+          description: OK
+components:
+  parameters:
+    UploadSessionId:
+      name: uploadSessionId
+      in: path
+      required: true
+      description: Identifikátor upload session
+      schema:
+        type: string
+        format: uuid
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    oauth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.example.com/token
+          scopes:
+            ocr.read: čtení
+  schemas:
+    InvestigationRequest:
+      type: object
+      required: [documentType]
+      properties:
+        documentType:
+          type: string
+          enum: [IDC, PASSPORT, DRIVING_LICENCE]
+        profile:
+          $ref: '#/components/schemas/EvaluationProfile'
+        pages:
+          type: array
+          maxItems: 2
+          items:
+            type: string
+            format: byte
+    EvaluationProfile:
+      type: object
+      description: Profil vyhodnocení s **pravidly**
+      properties:
+        name:
+          type: string
+          example: default
+        minScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        parent:
+          $ref: '#/components/schemas/EvaluationProfile'
+    InvestigationEvaluation:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - type: object
+          required: [result]
+          properties:
+            result:
+              type: string
+              enum: [OK, SUSPICIOUS, FAILED]
+            errors:
+              type: array
+              items:
+                $ref: '#/components/schemas/EvaluationError'
+            createdAt:
+              type: string
+              format: date-time
+              nullable: true
+    EvaluationError:
+      oneOf:
+        - $ref: '#/components/schemas/ValidationIssue'
+        - $ref: 'common.yaml#/components/schemas/Error'
+      discriminator:
+        propertyName: kind
+    ValidationIssue:
+      type: object
+      properties:
+        kind: { type: string }
+        field: { type: string }
+    Base:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true

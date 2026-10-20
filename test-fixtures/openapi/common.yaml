@@ -1,0 +1,23 @@
+components:
+  responses:
+    BadRequest:
+      description: Neplatný požadavek
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      required: [code]
+      properties:
+        kind: { type: string }
+        code:
+          type: string
+          example: E_VALIDATION
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string

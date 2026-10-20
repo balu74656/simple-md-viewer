@@ -1,0 +1,58 @@
+{
+  "swagger": "2.0",
+  "info": { "title": "Legacy Pet API", "version": "1.0.0" },
+  "host": "legacy.example.com",
+  "basePath": "/api",
+  "schemes": ["https"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "securityDefinitions": {
+    "api_key": { "type": "apiKey", "name": "X-API-Key", "in": "header" }
+  },
+  "paths": {
+    "/pets": {
+      "get": {
+        "tags": ["pets"],
+        "summary": "Seznam zvířat",
+        "parameters": [
+          { "name": "limit", "in": "query", "type": "integer", "format": "int32", "maximum": 100 }
+        ],
+        "responses": {
+          "200": { "description": "OK", "schema": { "type": "array", "items": { "$ref": "#/definitions/Pet" } } }
+        }
+      },
+      "post": {
+        "tags": ["pets"],
+        "summary": "Přidat zvíře",
+        "security": [{ "api_key": [] }],
+        "parameters": [
+          { "name": "body", "in": "body", "required": true, "schema": { "$ref": "#/definitions/Pet" } }
+        ],
+        "responses": { "201": { "description": "Vytvořeno" } }
+      }
+    },
+    "/pets/{id}/photo": {
+      "put": {
+        "tags": ["pets"],
+        "consumes": ["multipart/form-data"],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "type": "integer" },
+          { "name": "file", "in": "formData", "type": "file", "required": true },
+          { "name": "note", "in": "formData", "type": "string" }
+        ],
+        "responses": { "204": { "description": "Uloženo" } }
+      }
+    }
+  },
+  "definitions": {
+    "Pet": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "id": { "type": "integer", "format": "int64" },
+        "name": { "type": "string", "example": "Rex" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
