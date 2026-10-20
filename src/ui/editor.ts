@@ -14,10 +14,14 @@ import { HighlightStyle, bracketMatching, indentOnInput, syntaxHighlighting } fr
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
 import { tags as t } from '@lezer/highlight';
+import { forceLinting } from '@codemirror/lint';
+import type { DocKind } from '../doctype';
+import { plantuml, plantumlCodeLanguage } from './plantuml-lang';
+import { docKindFacet, plantumlLint, type PumlLintOptions } from './plantuml-lint';
 
 export interface EditorHandle {
   /** Novy stav pro dalsi tab. Stav nese obsah i undo historii. */
-  createState(doc: string): EditorState;
+  createState(doc: string, kind: DocKind): EditorState;
   getState(): EditorState;
   /** Prepne editor na stav jineho tabu. */
   setState(state: EditorState): void;
@@ -32,6 +36,10 @@ export interface EditorHandle {
 
   setTheme(theme: 'light' | 'dark'): void;
   setLineWrapping(on: boolean): void;
+  /** Prepne zvyrazneni a kontrolu (Markdown vs. PlantUML) aktualniho tabu. */
+  setKind(kind: DocKind): void;
+  /** Znovu zkontroluje PlantUML diagramy, napr. po zmene serveru. */
+  relint(): void;
   selectRange(from: number, to: number): void;
   stats(): { lines: number; chars: number; words: number };
   refresh(): void;
@@ -95,12 +103,30 @@ const mdHighlight = HighlightStyle.define([
   { tag: [t.function(t.variableName), t.labelName], color: 'var(--hl-function)' },
   { tag: [t.typeName, t.className, t.standard(t.name)], color: 'var(--hl-type)' },
   { tag: [t.attributeName, t.propertyName], color: 'var(--hl-attr)' },
+  // PlantUML: sipky a direktivy preprocesoru (!include, !theme)
+  { tag: t.operator, color: 'var(--hl-attr)' },
+  { tag: t.meta, color: 'var(--hl-type)' },
 ]);
+
+/** Jazyk editoru podle druhu dokumentu. */
+function languageFor(kind: DocKind): Extension {
+  const lang =
+    kind === 'plantuml'
+      ? plantuml()
+      : markdown({ base: markdownLanguage, codeLanguages: [plantumlCodeLanguage, ...languages] });
+  return [docKindFacet.of(kind), lang];
+}
 
 /* ------------------------------------------------------------------ */
 
-export function createEditor(parent: HTMLElement, onChange: () => void): EditorHandle {
+export function createEditor(
+  parent: HTMLElement,
+  onChange: () => void,
+  puml: PumlLintOptions,
+): EditorHandle {
   const themeCompartment = new Compartment();
+  const kindCompartment = new Compartment();
+  const pumlLint = plantumlLint(puml);
   const wrapCompartment = new Compartment();
 
   // Compartment patri stavu, ne pohledu. Kazdy tab ma vlastni stav, takze
@@ -110,7 +136,7 @@ export function createEditor(parent: HTMLElement, onChange: () => void): EditorH
   let wrap = true;
   let suppress = false;
 
-  function extensions(): Extension[] {
+  function extensions(kind: DocKind): Extension[] {
     return [
       lineNumbers(),
       highlightActiveLineGutter(),
@@ -123,7 +149,8 @@ export function createEditor(parent: HTMLElement, onChange: () => void): EditorH
       bracketMatching(),
       // Bez searchKeymap - Ctrl+F obsluhuje panel aplikace, ne CodeMirror
       keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
-      markdown({ base: markdownLanguage, codeLanguages: languages }),
+      kindCompartment.of(languageFor(kind)),
+      pumlLint,
       syntaxHighlighting(mdHighlight),
       baseTheme,
       themeCompartment.of(EditorView.theme({}, { dark: theme === 'dark' })),
@@ -134,11 +161,11 @@ export function createEditor(parent: HTMLElement, onChange: () => void): EditorH
     ];
   }
 
-  function createState(doc: string): EditorState {
-    return EditorState.create({ doc, extensions: extensions() });
+  function createState(doc: string, kind: DocKind): EditorState {
+    return EditorState.create({ doc, extensions: extensions(kind) });
   }
 
-  const view = new EditorView({ parent, state: createState('') });
+  const view = new EditorView({ parent, state: createState('', 'markdown') });
 
   function applyCompartments(): void {
     view.dispatch({
@@ -179,6 +206,14 @@ export function createEditor(parent: HTMLElement, onChange: () => void): EditorH
     setLineWrapping(on) {
       wrap = on;
       applyCompartments();
+    },
+
+    setKind(kind) {
+      view.dispatch({ effects: kindCompartment.reconfigure(languageFor(kind)) });
+    },
+
+    relint() {
+      forceLinting(view);
     },
 
     selectRange(from, to) {

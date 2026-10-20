@@ -458,6 +458,24 @@ button.primary {
   user-select: none;
 }
 
+#status-puml {
+  padding: 0 6px;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  border-radius: 4px;
+}
+
+#status-puml[data-state='errors'] {
+  color: var(--danger);
+  cursor: pointer;
+}
+
+#status-puml[data-state='errors']:hover {
+  text-decoration: underline;
+}
+
 /* ==================================================================
    Markdown
    ================================================================== */

@@ -1,4 +1,5 @@
 import { deflateRaw } from 'pako';
+import { isTauri } from '../fs/bridge';
 
 /**
  * PlantUML pouziva vlastni base64 abecedu (poradi znaku se lisi od standardu).
@@ -40,16 +41,49 @@ export function encodePlantUml(source: string): string {
 }
 
 /**
- * Sestavi URL obrazku. Vraci null, kdyz server neni nakonfigurovan.
- * Zdroj nemusi obsahovat @startuml/@enduml - server si poradi s obojim,
- * ale doplnujeme je, aby fungovaly i bloky psane bez nich.
+ * Text, ktery se posila na server. Zdroj nemusi obsahovat @startuml/@enduml -
+ * server si poradi s obojim, ale doplnujeme je, aby fungovaly i bloky psane
+ * bez nich. `lineOffset` = kolik radku jsme pridali pred zdroj (pro mapovani
+ * cisla chybneho radku zpet do editoru).
  */
+export function plantUmlBody(source: string): { body: string; lineOffset: number } {
+  return /@start\w+/.test(source)
+    ? { body: source, lineOffset: 0 }
+    : { body: `@startuml\n${source}\n@enduml`, lineOffset: 1 };
+}
+
+/** Sestavi URL obrazku. Vraci null, kdyz server neni nakonfigurovan. */
 export function plantUmlUrl(
   source: string,
   server: string,
   format: 'svg' | 'png',
 ): string | null {
   if (!server) return null;
-  const body = /@start\w+/.test(source) ? source : `@startuml\n${source}\n@enduml`;
-  return `${server}/${format}/${encodePlantUml(body)}`;
+  return `${server}/${format}/${encodePlantUml(plantUmlBody(source).body)}`;
+}
+
+export interface PlantUmlError {
+  /** Cislo radku v textu poslanem na server, od 1. */
+  line: number;
+  message: string;
+}
+
+/**
+ * Zeptá se serveru na syntaxi diagramu. Server pri chybe vraci hlavicky
+ * X-PlantUML-Diagram-Error a X-PlantUML-Diagram-Error-Line.
+ *
+ * V Tauri jde dotaz pres Rust: prohlizec by bez Access-Control-Expose-Headers
+ * na serveru vlastni hlavicky neprecetl. V prohlizeci (vyvoj) zkousime fetch.
+ * Vraci null, kdyz je diagram v poradku. Vyjimka = server nedostupny.
+ */
+export async function checkPlantUml(body: string, server: string): Promise<PlantUmlError | null> {
+  const url = `${server}/svg/${encodePlantUml(body)}`;
+  if (isTauri) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    return await invoke<PlantUmlError | null>('plantuml_check', { url });
+  }
+  const res = await fetch(url);
+  const message = res.headers.get('X-PlantUML-Diagram-Error');
+  if (!message) return null;
+  return { line: Number(res.headers.get('X-PlantUML-Diagram-Error-Line')) || 1, message };
 }
