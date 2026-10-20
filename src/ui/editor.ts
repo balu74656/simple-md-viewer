@@ -13,6 +13,8 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { HighlightStyle, bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
+import { yaml } from '@codemirror/lang-yaml';
+import { json } from '@codemirror/lang-json';
 import { tags as t } from '@lezer/highlight';
 import { forceLinting } from '@codemirror/lint';
 import type { DocKind } from '../doctype';
@@ -36,7 +38,7 @@ export interface EditorHandle {
 
   setTheme(theme: 'light' | 'dark'): void;
   setLineWrapping(on: boolean): void;
-  /** Prepne zvyrazneni a kontrolu (Markdown vs. PlantUML) aktualniho tabu. */
+  /** Prepne zvyrazneni a kontrolu (Markdown, PlantUML, YAML, JSON) aktualniho tabu. */
   setKind(kind: DocKind): void;
   /** Znovu zkontroluje PlantUML diagramy, napr. po zmene serveru. */
   relint(): void;
@@ -110,10 +112,20 @@ const mdHighlight = HighlightStyle.define([
 
 /** Jazyk editoru podle druhu dokumentu. */
 function languageFor(kind: DocKind): Extension {
-  const lang =
-    kind === 'plantuml'
-      ? plantuml()
-      : markdown({ base: markdownLanguage, codeLanguages: [plantumlCodeLanguage, ...languages] });
+  let lang: Extension;
+  switch (kind) {
+    case 'plantuml':
+      lang = plantuml();
+      break;
+    case 'yaml':
+      lang = yaml();
+      break;
+    case 'json':
+      lang = json();
+      break;
+    default:
+      lang = markdown({ base: markdownLanguage, codeLanguages: [plantumlCodeLanguage, ...languages] });
+  }
   return [docKindFacet.of(kind), lang];
 }
 

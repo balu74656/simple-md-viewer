@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "MD Viewer",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "identifier": "io.github.balu74656.mdviewer",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -49,6 +49,20 @@
         "description": "PlantUML diagram",
         "role": "Editor",
         "mimeType": "text/plain"
+      },
+      {
+        "ext": ["yaml", "yml"],
+        "name": "YAML Document",
+        "description": "YAML / OpenAPI specifikace",
+        "role": "Editor",
+        "mimeType": "application/yaml"
+      },
+      {
+        "ext": ["json"],
+        "name": "JSON Document",
+        "description": "JSON / OpenAPI specifikace",
+        "role": "Editor",
+        "mimeType": "application/json"
       }
     ],
     "windows": {

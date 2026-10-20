@@ -54,6 +54,16 @@ a [CHANGELOG.md](CHANGELOG.md).
   touchpadu funguje pinch. Dvojklik nebo `0` = na velikost okna, `1` = skutečná
   velikost, `+`/`−` a šipky z klávesnice, `Esc` zavře. Prohlížeč se vždy otevře
   na velikost okna. U formátu PNG je diagram nad 100 % rozmazaný, SVG zůstává ostré.
+- **OpenAPI / Swagger** — `.yaml`, `.yml` a `.json` se specifikací OpenAPI 3.0/3.1
+  nebo Swagger 2.0 se zobrazí jako dokumentace ve stylu Swagger UI (jen ke čtení,
+  bez *Try it out*): operace seskupené podle tagů, barevné metody, zámek u
+  zabezpečených operací, parametry, tělo požadavku a odpovědi s přepínačem
+  **Příklad / Schéma**, sekce Autorizace a Schémata. Příklad se vezme ze
+  specifikace, nebo se vygeneruje ze schématu. `$ref` funguje i do jiných souborů
+  (`common.yaml#/components/schemas/Error`), cesta se bere relativně k souboru,
+  ve kterém odkaz stojí. Odkazy na URL se nestahují. Detaily se generují až při
+  rozbalení, takže i velká specifikace se otevře hned. YAML/JSON, který není
+  OpenAPI, se zobrazí jako zvýrazněný kód.
 
 PlantUML se renderuje přes server, který si nastavíš v **Nastavení**. Zdroj
 diagramu se na něj odesílá — pro citlivou dokumentaci použij interní instanci,
@@ -159,8 +169,9 @@ potvrdit uživatelem:
 
 Alternativně: *Nastavení → Aplikace → Výchozí aplikace → Zvolit výchozí podle typu souboru → `.md`*
 
-Podporované přípony: `.md`, `.markdown`, `.mdown`, `.mkd` a pro PlantUML
-`.puml`, `.plantuml`, `.pu`, `.iuml` (výchozí aplikaci pro ně nastavíš stejně)
+Podporované přípony: `.md`, `.markdown`, `.mdown`, `.mkd`, pro PlantUML
+`.puml`, `.plantuml`, `.pu`, `.iuml` a pro OpenAPI `.yaml`, `.yml`, `.json`
+(výchozí aplikaci pro ně nastavíš stejně)
 
 ### Proč je instalátor anglicky
 
@@ -277,6 +288,8 @@ src/
     markdown.ts        marked + highlight.js + sanitizace
     postprocess.ts     lazy render Mermaid / KaTeX / PlantUML
     plantuml.ts        deflate + PlantUML base64 encoder, kontrola syntaxe
+    openapi.ts         OpenAPI / Swagger náhled ve stylu Swagger UI
+    openapi-refs.ts    parsování YAML/JSON, $ref včetně externích souborů
   ui/
     editor.ts          CodeMirror 6 — fasáda nad editorem
     plantuml-lang.ts   zvýraznění syntaxe PlantUML

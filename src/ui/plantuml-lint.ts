@@ -43,6 +43,7 @@ export function findDiagrams(text: string, kind: DocKind): DiagramRange[] {
     if (found.length === 0 && text.trim()) found.push({ from: 0, source: text });
     return found;
   }
+  if (kind !== 'markdown') return [];
   return Array.from(text.matchAll(FENCE_RE), (m) => ({
     from: m.index + m[0].indexOf('\n') + 1,
     // Nahled dostava obsah bloku bez koncoveho odradkovani
