@@ -6,6 +6,22 @@ verzování ze [semver](https://semver.org/lang/cs/).
 Historie Gitu začíná u 0.3.0 — starší verze jsou zaznamenané zpětně,
 jejich zdrojový kód v repozitáři není.
 
+## [0.4.0]
+
+### Přidáno
+
+- **Samostatné PlantUML soubory.** `.puml`, `.plantuml`, `.pu` a `.iuml` se
+  v náhledu vykreslí rovnou jako diagram přes nastavený PlantUML server,
+  místo aby se zobrazily jako Markdown text. Soubor s více páry
+  `@startuml … @enduml` se vykreslí jako víc diagramů pod sebou.
+- Instalátor registruje tyto přípony, takže se otevírají dvojklikem.
+- Dialog **Otevřít** nabízí Markdown i PlantUML soubory.
+
+### Změněno
+
+- **Uložit jako** u PlantUML souboru předvolí filtr PlantUML. Změna přípony
+  přes *Uložit jako* přepne i způsob vykreslení náhledu.
+
 ## [0.3.1]
 
 ### Přidáno

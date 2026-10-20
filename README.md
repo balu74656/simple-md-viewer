@@ -46,6 +46,9 @@ a [CHANGELOG.md](CHANGELOG.md).
 - **Mermaid** — bloky ```` ```mermaid ````
 - **PlantUML** — bloky ```` ```plantuml ````, ```` ```puml ````, ```` ```uml ````
 - **Matematika** — `$inline$` a `$$blok$$` (KaTeX)
+- **Samostatné PlantUML soubory** — `.puml`, `.plantuml`, `.pu`, `.iuml` se
+  zobrazí rovnou jako diagram; víc párů `@startuml … @enduml` v jednom souboru
+  dá víc diagramů pod sebou
 
 PlantUML se renderuje přes server, který si nastavíš v **Nastavení**. Zdroj
 diagramu se na něj odesílá — pro citlivou dokumentaci použij interní instanci,
@@ -141,7 +144,8 @@ potvrdit uživatelem:
 
 Alternativně: *Nastavení → Aplikace → Výchozí aplikace → Zvolit výchozí podle typu souboru → `.md`*
 
-Podporované přípony: `.md`, `.markdown`, `.mdown`, `.mkd`
+Podporované přípony: `.md`, `.markdown`, `.mdown`, `.mkd` a pro PlantUML
+`.puml`, `.plantuml`, `.pu`, `.iuml` (výchozí aplikaci pro ně nastavíš stejně)
 
 ### Proč je instalátor anglicky
 
