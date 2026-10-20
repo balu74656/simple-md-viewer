@@ -49,6 +49,11 @@ a [CHANGELOG.md](CHANGELOG.md).
 - **Samostatné PlantUML soubory** — `.puml`, `.plantuml`, `.pu`, `.iuml` se
   zobrazí rovnou jako diagram; víc párů `@startuml … @enduml` v jednom souboru
   dá víc diagramů pod sebou
+- **Zoom diagramů** — klik na PlantUML nebo Mermaid diagram ho otevře přes celé
+  okno. Kolečko myši zoomuje ke kurzoru (10–800 %), tažením se posouvá, na
+  touchpadu funguje pinch. Dvojklik nebo `0` = na velikost okna, `1` = skutečná
+  velikost, `+`/`−` a šipky z klávesnice, `Esc` zavře. Prohlížeč se vždy otevře
+  na velikost okna. U formátu PNG je diagram nad 100 % rozmazaný, SVG zůstává ostré.
 
 PlantUML se renderuje přes server, který si nastavíš v **Nastavení**. Zdroj
 diagramu se na něj odesílá — pro citlivou dokumentaci použij interní instanci,
@@ -60,6 +65,16 @@ ne veřejnou.
 
 Editační režim běží na **CodeMirror 6**: čísla řádků, zvýraznění Markdown syntaxe
 (včetně obsahu fenced bloků podle jazyka), undo/redo historie a odsazování Tabem.
+
+**PlantUML v editoru.** Kód PlantUML je barevně zvýrazněný — v samostatných
+`.puml` souborech i v blocích ```` ```plantuml ```` / ```` ```puml ```` uvnitř
+Markdownu. Sekundu po posledním úhozu se každý diagram zkontroluje na
+nastaveném PlantUML serveru; chybný řádek se podtrhne a označí v okraji, text
+chyby je v tooltipu. Ve stavovém řádku je `PlantUML OK` nebo číslo řádku
+s chybou — klik na něj skočí na chybu. Dotaz jde přes Rust (`plantuml_check`),
+protože server chybu hlásí v hlavičkách `X-PlantUML-Diagram-Error(-Line)`,
+které WebView kvůli CORS nepřečte. Certifikáty se berou z Windows úložiště,
+takže projde i firemní CA.
 
 Zalamování dlouhých řádků se přepíná v **Nastavení** — vypnuté se hodí na dokumenty
 s širokými tabulkami.
@@ -256,16 +271,19 @@ src/
   render/
     markdown.ts        marked + highlight.js + sanitizace
     postprocess.ts     lazy render Mermaid / KaTeX / PlantUML
-    plantuml.ts        deflate + PlantUML base64 encoder
+    plantuml.ts        deflate + PlantUML base64 encoder, kontrola syntaxe
   ui/
     editor.ts          CodeMirror 6 — fasáda nad editorem
+    plantuml-lang.ts   zvýraznění syntaxe PlantUML
+    plantuml-lint.ts   kontrola PlantUML diagramů na serveru (lint)
+    diagram-viewer.ts  celookenní prohlížeč diagramů se zoomem
     toc.ts             osnova + scroll-spy
     find.ts            hledání (CSS Custom Highlight API)
     theme.ts           light / dark / auto
   fs/
     bridge.ts          abstrakce Tauri ↔ prohlížeč
 src-tauri/
-  src/lib.rs           read_file / write_file / take_pending_file, argv, single instance
+  src/lib.rs           read_file / write_file / plantuml_check / take_pending_file, argv, single instance
   tauri.conf.json      fileAssociations, CSP, NSIS bundle
 ```
 

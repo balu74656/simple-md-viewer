@@ -22,6 +22,8 @@ import { applyTheme, onSystemThemeChange, resolveTheme } from './ui/theme';
 import { createToc } from './ui/toc';
 import { createFind } from './ui/find';
 import { createEditor } from './ui/editor';
+import { createDiagramViewer } from './ui/diagram-viewer';
+import type { PumlCheckStatus } from './ui/plantuml-lint';
 import { createTabs, tabTitle, type Tab, type TabsController } from './tabs';
 
 /* ------------------------------------------------------------------ */
@@ -41,6 +43,7 @@ const tocList = $<HTMLElement>('#toc-list');
 const filenameEl = $<HTMLElement>('#filename');
 const statusLeft = $<HTMLElement>('#status-left');
 const statusRight = $<HTMLElement>('#status-right');
+const statusPuml = $<HTMLButtonElement>('#status-puml');
 const btnSave = $<HTMLButtonElement>('#btn-save');
 const settingsDialog = $<HTMLDialogElement>('#settings-dialog');
 
@@ -48,8 +51,12 @@ const settingsDialog = $<HTMLDialogElement>('#settings-dialog');
 /* Jadro: editor, osnova, hledani, taby                                */
 /* ------------------------------------------------------------------ */
 
-const editor = createEditor($<HTMLElement>('#editor'), onEditorChange);
+const editor = createEditor($<HTMLElement>('#editor'), onEditorChange, {
+  server: () => normalizeServerUrl(getSettings().plantumlServer),
+  onStatus: showPumlStatus,
+});
 const toc = createToc(viewPane, tocList);
+const diagramViewer = createDiagramViewer(viewPane);
 
 const find = createFind(
   {
@@ -292,7 +299,7 @@ function newTab(content: string, init?: { path?: string; crlf?: boolean }): Tab 
     savedContent: content,
     crlf: init?.crlf ?? false,
     mode: getSettings().defaultMode,
-    editorState: editor.createState(content),
+    editorState: editor.createState(content, docKind(init?.path ?? null)),
   });
 }
 
@@ -346,7 +353,10 @@ async function saveFile(saveAs = false): Promise<void> {
     tab.savedContent = content;
     setDirty(tab, false);
     tabs.renderBar();
-    if (kindChanged) void render();
+    if (kindChanged) {
+      editor.setKind(docKind(target));
+      void render();
+    }
     statusLeft.textContent = `Uloženo ${new Date().toLocaleTimeString('cs-CZ')}`;
   } catch (e) {
     statusLeft.textContent = `Uložení selhalo: ${String(e)}`;
@@ -387,6 +397,7 @@ settingsDialog.addEventListener('close', () => {
   resetMermaidTheme();
   invalidateAllPreviews();
   void render();
+  editor.relint();
 });
 
 function cycleTheme(): void {
@@ -404,6 +415,44 @@ function cycleTheme(): void {
 function invalidateAllPreviews(): void {
   for (const tab of tabs.list()) renderedFor.delete(tab);
 }
+
+/* ------------------------------------------------------------------ */
+/* Kontrola PlantUML                                                   */
+/* ------------------------------------------------------------------ */
+
+let pumlErrorLine = 0;
+
+function showPumlStatus(st: PumlCheckStatus): void {
+  pumlErrorLine = st.state === 'errors' ? st.firstLine : 0;
+  statusPuml.hidden = st.state === 'off';
+  statusPuml.dataset.state = st.state;
+  statusPuml.disabled = st.state !== 'errors';
+  switch (st.state) {
+    case 'ok':
+      statusPuml.textContent = st.diagrams === 1 ? 'PlantUML OK' : `PlantUML OK (${st.diagrams})`;
+      statusPuml.title = 'Syntaxe zkontrolována na PlantUML serveru';
+      break;
+    case 'errors':
+      statusPuml.textContent =
+        st.count === 1 ? `PlantUML: chyba na řádku ${st.firstLine}` : `PlantUML: ${st.count} chyby, první na řádku ${st.firstLine}`;
+      statusPuml.title = 'Přejít na chybu';
+      break;
+    case 'unreachable':
+      statusPuml.textContent = 'PlantUML: server nedostupný';
+      statusPuml.title = 'Syntaxi se nepodařilo ověřit';
+      break;
+    default:
+      statusPuml.textContent = '';
+  }
+}
+
+statusPuml.addEventListener('click', () => {
+  if (!pumlErrorLine) return;
+  const tab = tabs.active();
+  if (tab && tab.mode === 'view') setMode('split');
+  const line = editor.getState().doc.line(pumlErrorLine);
+  editor.selectRange(line.from, line.to);
+});
 
 /* ------------------------------------------------------------------ */
 /* Udalosti                                                            */
@@ -426,6 +475,8 @@ for (const b of document.querySelectorAll<HTMLButtonElement>('#mode-switch butto
 window.addEventListener(
   'keydown',
   (e) => {
+    // Otevreny prohlizec diagramu si klavesy obslouzi sam
+    if (diagramViewer.isOpen()) return;
     const ctrl = e.ctrlKey || e.metaKey;
     if (!ctrl) {
       if (e.key === 'Escape' && find.isOpen()) find.close();
@@ -538,7 +589,8 @@ soubory (\`.puml\`, \`.plantuml\`, \`.pu\`, \`.iuml\`) se zobrazí rovnou jako d
 - GFM: tabulky, ~~škrtnutí~~, task listy
 - Zvýraznění syntaxe v blocích kódu
 - Mermaid diagramy
-- PlantUML přes vlastní server
+- PlantUML přes vlastní server, s kontrolou syntaxe v editoru
+- Klik na diagram ho otevře se zoomem a posunem
 - Matematiku v \`$…$\` a \`$$…$$\`
 `;
 

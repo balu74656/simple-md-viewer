@@ -6,6 +6,25 @@ verzování ze [semver](https://semver.org/lang/cs/).
 Historie Gitu začíná u 0.3.0 — starší verze jsou zaznamenané zpětně,
 jejich zdrojový kód v repozitáři není.
 
+## [0.5.0]
+
+### Přidáno
+
+- **Zoom diagramů.** Klik na PlantUML nebo Mermaid diagram (samostatný `.puml`
+  i blok v Markdownu) ho otevře přes celé okno. Kolečko zoomuje ke kurzoru,
+  tažení posouvá, pinch na touchpadu, dvojklik vrátí velikost okna. Ovládání
+  i z klávesnice (`+`, `−`, `0`, `1`, šipky, `Esc`).
+- **Zvýraznění PlantUML v editoru** — v `.puml` souborech i v blocích
+  ```` ```plantuml ```` / ```` ```puml ```` uvnitř Markdownu.
+- **Kontrola syntaxe PlantUML.** Sekundu po psaní se diagramy ověří na
+  nastaveném serveru. Chybný řádek je podtržený a označený v okraji, text
+  chyby v tooltipu, stav ve stavovém řádku (klik skočí na chybu).
+
+### Změněno
+
+- Rust část má nově závislost `reqwest` (native-tls + systémová proxy) pro
+  dotaz na PlantUML server.
+
 ## [0.4.0]
 
 ### Přidáno

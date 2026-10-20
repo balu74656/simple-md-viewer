@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
+use std::time::Duration;
 
 use serde::Serialize;
 use tauri::{Emitter, Manager, State};
@@ -81,6 +82,47 @@ fn write_file(path: String, content: String, crlf: bool) -> Result<(), String> {
     Ok(())
 }
 
+#[derive(Serialize)]
+struct PlantUmlError {
+    /// Radek v textu poslanem na server, od 1.
+    line: u32,
+    message: String,
+}
+
+/// Kontrola syntaxe diagramu na PlantUML serveru. Server chybu hlasi
+/// v hlavickach X-PlantUML-Diagram-Error(-Line). Dotaz jde pres Rust, protoze
+/// WebView bez Access-Control-Expose-Headers na serveru hlavicky neprecte.
+/// native-tls = certifikaty z Windows store, takze projde i firemni CA.
+#[tauri::command]
+async fn plantuml_check(url: String) -> Result<Option<PlantUmlError>, String> {
+    if !(url.starts_with("http://") || url.starts_with("https://")) {
+        return Err("Neplatná URL PlantUML serveru".into());
+    }
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let res = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("PlantUML server nedostupný: {e}"))?;
+
+    let header = |name: &str| {
+        res.headers()
+            .get(name)
+            .and_then(|v| v.to_str().ok())
+            .map(str::to_owned)
+    };
+    let Some(message) = header("X-PlantUML-Diagram-Error") else {
+        return Ok(None);
+    };
+    let line = header("X-PlantUML-Diagram-Error-Line")
+        .and_then(|l| l.trim().parse().ok())
+        .unwrap_or(1);
+    Ok(Some(PlantUmlError { line, message }))
+}
+
 #[tauri::command]
 fn take_pending_file(state: State<'_, PendingFile>) -> Option<String> {
     state.0.lock().ok().and_then(|mut guard| guard.take())
@@ -123,6 +165,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             read_file,
             write_file,
+            plantuml_check,
             take_pending_file
         ])
         .run(tauri::generate_context!())
