@@ -1,8 +1,9 @@
 name: release
 
-# Instalator se stavi z tagu, zvlast pro x64 a ARM64. Postup vydani:
-#   npm run set-version 0.3.1
-#   git commit -am "0.3.1" && git tag v0.3.1 && git push --follow-tags
+# Instalator se stavi z tagu, zvlast pro ARM64 a x64. Dve cesty k vydani:
+#  - Actions -> release -> Run workflow (na main): verze se vezme z package.json,
+#    workflow sam vytvori tag v<verze> na aktualnim main a postavi instalatory.
+#  - Push tagu v* rucne (puvodni postup), napr. git tag -a v0.5.1 && git push origin v0.5.1
 on:
   push:
     tags:
@@ -13,8 +14,47 @@ permissions:
   contents: write
 
 jobs:
+  # Urci tag a commit, ze ktereho se stavi. Pri rucnim spusteni tag vytvori.
+  # Tag pushnuty pres GITHUB_TOKEN nespousti dalsi workflow, takze build
+  # nepobezi dvakrat.
+  tag:
+    runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.tag.outputs.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag z pushe
+        if: github.event_name == 'push'
+        run: echo "TAG=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+
+      - name: Vytvorit tag podle package.json
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Rucni vydani jen z vetve main (spusteno z $GITHUB_REF_NAME)."
+            exit 1
+          fi
+          TAG="v$(node -p "require('./package.json').version")"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
+            echo "::error::Tag $TAG uz existuje. Zvedni verzi (npm run set-version), nebo smaz stary tag a Release."
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "MD Viewer $TAG"
+          git push origin "$TAG"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+
+      - id: tag
+        run: |
+          echo "name=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Vydava se $TAG z commitu $(git rev-parse --short HEAD)" >> "$GITHUB_STEP_SUMMARY"
+
   build:
     name: ${{ matrix.arch }}
+    needs: tag
 
     strategy:
       # Oba joby zakladaji tentyz Release. Paralelne by se o nej prali,
@@ -35,6 +75,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.tag.outputs.name }}
 
       - uses: actions/setup-node@v4
         with:
@@ -60,8 +102,8 @@ jobs:
           # VITE_PLANTUML_SERVER zde zamerne chybi - verejny instalator
           # startuje s prazdnym polem a server se doplni v Nastaveni.
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: MD Viewer ${{ github.ref_name }}
+          tagName: ${{ needs.tag.outputs.name }}
+          releaseName: MD Viewer ${{ needs.tag.outputs.name }}
           releaseBody: |
             Instalátory pro Windows — vyber podle architektury procesoru:
 

@@ -228,17 +228,22 @@ interní adresa neodchází. Vzor je v `.env.example`.
 
 ## Vydání nové verze
 
-```powershell
-npm run set-version 0.3.1
-git commit -am "0.3.1"
-git tag v0.3.1
-git push --follow-tags
-```
+1. Zvedni verzi a dostaň ji do `main` (běžně jako součást PR):
 
-Push tagu `v*` spustí workflow **release**: Windows runner sestaví instalátor
-a vyvěsí ho do [Releases](https://github.com/balu74656/simple-md-viewer/releases).
-První běh trvá ~8 minut, další díky cache Rustu ~3. Ručně jde spustit i bez tagu
-přes *Actions → release → Run workflow*.
+   ```powershell
+   npm run set-version 0.5.2
+   ```
+
+2. Na GitHubu **Actions → release → Run workflow** (větev `main`). Workflow
+   přečte verzi z `package.json`, sám vytvoří tag `v0.5.2` na aktuálním `main`
+   a postaví instalátory. Když tag už existuje, skončí chybou — nic se nepřepíše.
+
+Pořád funguje i původní cesta: push tagu `v*` ručně
+(`git tag -a v0.5.2 -m "MD Viewer 0.5.2"` + `git push origin v0.5.2`).
+
+Instalátory se staví postupně, nejdřív ARM64, potom x64, a vyvěsí se do
+[Releases](https://github.com/balu74656/simple-md-viewer/releases). Celé to
+trvá ~15 minut, ARM64 je k dispozici zhruba v polovině.
 
 Lokální build bez vydání:
 
