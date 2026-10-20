@@ -20,14 +20,16 @@ jobs:
       # Oba joby zakladaji tentyz Release. Paralelne by se o nej prali,
       # serazene za sebou druhy jen prida svuj instalator k existujicimu.
       max-parallel: 1
-      # Kdyz spadne ARM, x64 instalator at je stejne k dispozici.
+      # Kdyz spadne jedna architektura, druhy instalator at je stejne k dispozici.
       fail-fast: false
+      # Poradi v include = poradi buildu (max-parallel: 1). ARM64 jde prvni,
+      # autor ho pouziva sam a chce ho mit driv.
       matrix:
         include:
-          - runner: windows-latest
-            arch: x64
           - runner: windows-11-arm
             arch: arm64
+          - runner: windows-latest
+            arch: x64
 
     runs-on: ${{ matrix.runner }}
 
