@@ -70,7 +70,8 @@ export interface PlantUmlError {
 
 /**
  * Zeptá se serveru na syntaxi diagramu. Server pri chybe vraci hlavicky
- * X-PlantUML-Diagram-Error a X-PlantUML-Diagram-Error-Line.
+ * X-PlantUML-Diagram-Error a X-PlantUML-Diagram-Error-Line. Vraceny `line`
+ * je vzdy od 1, at server cisluje jakkoli.
  *
  * V Tauri jde dotaz pres Rust: prohlizec by bez Access-Control-Expose-Headers
  * na serveru vlastni hlavicky neprecetl. V prohlizeci (vyvoj) zkousime fetch.
@@ -85,5 +86,8 @@ export async function checkPlantUml(body: string, server: string): Promise<Plant
   const res = await fetch(url);
   const message = res.headers.get('X-PlantUML-Diagram-Error');
   if (!message) return null;
-  return { line: Number(res.headers.get('X-PlantUML-Diagram-Error-Line')) || 1, message };
+  // plantuml-server cisluje od 0, PicoWeb (plantuml.jar -picoweb) od 1 - viz lib.rs
+  const pos = Number(res.headers.get('X-PlantUML-Diagram-Error-Line')) || 0;
+  const picoweb = res.headers.get('Server')?.includes('PicoWeb') ?? false;
+  return { line: picoweb ? Math.max(pos, 1) : pos + 1, message };
 }
