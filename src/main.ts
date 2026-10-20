@@ -22,6 +22,7 @@ import { applyTheme, onSystemThemeChange, resolveTheme } from './ui/theme';
 import { createToc } from './ui/toc';
 import { createFind } from './ui/find';
 import { createEditor } from './ui/editor';
+import { createDiagramViewer } from './ui/diagram-viewer';
 import { createTabs, tabTitle, type Tab, type TabsController } from './tabs';
 
 /* ------------------------------------------------------------------ */
@@ -50,6 +51,7 @@ const settingsDialog = $<HTMLDialogElement>('#settings-dialog');
 
 const editor = createEditor($<HTMLElement>('#editor'), onEditorChange);
 const toc = createToc(viewPane, tocList);
+const diagramViewer = createDiagramViewer(viewPane);
 
 const find = createFind(
   {
@@ -426,6 +428,8 @@ for (const b of document.querySelectorAll<HTMLButtonElement>('#mode-switch butto
 window.addEventListener(
   'keydown',
   (e) => {
+    // Otevreny prohlizec diagramu si klavesy obslouzi sam
+    if (diagramViewer.isOpen()) return;
     const ctrl = e.ctrlKey || e.metaKey;
     if (!ctrl) {
       if (e.key === 'Escape' && find.isOpen()) find.close();

@@ -668,6 +668,103 @@ button.primary {
   padding: 6px;
 }
 
+/* Klikem se diagram otevre v prohlizeci se zoomem */
+.puml-figure:has(img),
+.mermaid-figure:has(svg) {
+  cursor: zoom-in;
+}
+
+/* ---- Prohlizec diagramu (zoom + posun) ---- */
+
+#diagram-viewer {
+  width: calc(100vw - 32px);
+  height: calc(100vh - 32px);
+  max-width: none;
+  max-height: none;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  display: none;
+  flex-direction: column;
+}
+
+#diagram-viewer[open] {
+  display: flex;
+}
+
+.dv-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+}
+
+.dv-toolbar button {
+  min-width: 32px;
+  padding: 3px 9px;
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.dv-toolbar button:hover {
+  border-color: var(--accent);
+}
+
+.dv-zoom {
+  min-width: 4.5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+}
+
+.dv-close {
+  margin-left: auto;
+}
+
+.dv-viewport {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  background: var(--bg-sunken);
+}
+
+.dv-viewport:focus {
+  outline: none;
+}
+
+.dv-viewport.dragging {
+  cursor: grabbing;
+}
+
+.dv-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.dv-stage > * {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.dv-stage > .puml-img {
+  max-width: none;
+  padding: 0;
+  border-radius: 0;
+  pointer-events: none;
+}
+
 .math-block {
   margin: 1em 0;
   overflow-x: auto;
