@@ -1,0 +1,16 @@
+# Neni striktne validni YAML: pokracovani textu v uvozovkach je odsazene
+# min, nez dovoluje specifikace. Swagger UI (js-yaml) ho prijme, MD Viewer
+# ho zobrazi s varovanim. Verze bez uvozovek je v YAML cislo.
+openapi: 3.0
+info:
+  title: Lenient YAML
+  version: "1"
+paths:
+  /qr:
+    post:
+      tags: [IdCard]
+      description: "Prvni radek popisu
+    pokracovani odsazene malo"
+      responses:
+        '200':
+          description: OK

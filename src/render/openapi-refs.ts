@@ -1,4 +1,5 @@
 import { parseDocument } from 'yaml';
+import { load as loadLenient } from 'js-yaml';
 
 /**
  * Nacteni YAML/JSON a rozbalovani $ref, vcetne odkazu do jinych souboru
@@ -27,10 +28,25 @@ function lineAt(source: string, pos: number): number {
   return source.slice(0, pos).split('\n').length;
 }
 
-export function parseData(source: string, format: 'yaml' | 'json'): unknown {
+export interface Parsed {
+  value: unknown;
+  /**
+   * Soubor neni striktne validni YAML, ale tolerantni parser ho nacetl
+   * (typicky viceradkovy text v uvozovkach s malo odsazenym pokracovanim).
+   */
+  warning?: DataParseError;
+}
+
+/**
+ * YAML se cte nejdriv striktne (presne cislo radku chyby). Kdyz to selze,
+ * zkusi se js-yaml - stejna knihovna jako ve Swagger UI a v nahledu GitLabu,
+ * ktera prijme i drobne odchylky od specifikace. Chyba se pak vraci jako
+ * varovani, ne jako vyjimka.
+ */
+export function parseData(source: string, format: 'yaml' | 'json'): Parsed {
   if (format === 'json') {
     try {
-      return JSON.parse(source);
+      return { value: JSON.parse(source) };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       const lc = /line (\d+)/.exec(msg);
@@ -41,14 +57,22 @@ export function parseData(source: string, format: 'yaml' | 'json'): unknown {
   }
   const doc = parseDocument(source, { uniqueKeys: false });
   const err = doc.errors[0];
+  if (!err) return { value: doc.toJS({ maxAliasCount: 10000 }) };
+
   // Zprava konci vypisem kontextu (radek se znackou) - ten ukazuje nahled jinak
-  if (err) throw new DataParseError(err.message.split(/ at line \d+|\n/)[0], err.linePos?.[0].line);
-  return doc.toJS({ maxAliasCount: 10000 });
+  const strict = new DataParseError(err.message.split(/ at line \d+|\n/)[0], err.linePos?.[0].line);
+  try {
+    // json: true = duplicitni klic prepise predchozi, jako u striktniho cteni
+    return { value: loadLenient(source, { json: true }), warning: strict };
+  } catch {
+    throw strict;
+  }
 }
 
 /** Je to OpenAPI 3.x nebo Swagger 2.0? Rozhoduje obsah, ne pripona. */
 export function isOpenApi(doc: unknown): doc is Obj {
-  return isObj(doc) && (typeof doc.openapi === 'string' || String(doc.swagger ?? '').startsWith('2'));
+  // `openapi: 3.0` bez uvozovek je v YAML cislo, ne retezec
+  return isObj(doc) && (/^3/.test(String(doc.openapi ?? '')) || String(doc.swagger ?? '').startsWith('2'));
 }
 
 /** Rychly odhad bez parsovani - aby rozbity OpenAPI soubor ukazal chybu, ne jen kod. */
@@ -110,6 +134,8 @@ const MAX_FILES = 50;
 export class RefResolver {
   private docs = new Map<string, unknown>();
   private failed = new Map<string, string>();
+  /** Externi soubory nactene jen tolerantne (viz parseData). */
+  readonly warnings: Array<{ path: string; error: DataParseError }> = [];
 
   /**
    * @param rootPath cesta otevreneho souboru; '' pro neulozeny tab
@@ -148,9 +174,10 @@ export class RefResolver {
           continue;
         }
         try {
-          const parsed = parseData(await read(path), formatOf(path));
-          this.docs.set(k, parsed);
-          queue.push([parsed, path]);
+          const { value, warning } = parseData(await read(path), formatOf(path));
+          if (warning) this.warnings.push({ path, error: warning });
+          this.docs.set(k, value);
+          queue.push([value, path]);
         } catch (e) {
           this.failed.set(k, e instanceof Error ? e.message : String(e));
         }
