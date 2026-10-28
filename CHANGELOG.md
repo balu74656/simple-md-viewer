@@ -6,6 +6,17 @@ verzování ze [semver](https://semver.org/lang/cs/).
 Historie Gitu začíná u 0.3.0 — starší verze jsou zaznamenané zpětně,
 jejich zdrojový kód v repozitáři není.
 
+## [0.6.1]
+
+### Opraveno
+
+- **OpenAPI soubor, který Swagger UI zobrazí, končil chybou YAML.** Typicky
+  víceřádkový text v uvozovkách s pokračováním odsazeným méně, než dovoluje
+  YAML specifikace. Takový soubor se teď načte tolerantně (stejnou knihovnou
+  js-yaml jako Swagger UI a náhled v GitLabu) a nad dokumentací je žluté
+  varování s číslem řádku. Úplně rozbitý YAML dál ukáže chybu.
+- `openapi: 3.0` bez uvozovek (v YAML číslo) se nepoznalo jako OpenAPI.
+
 ## [0.6.0]
 
 ### Přidáno

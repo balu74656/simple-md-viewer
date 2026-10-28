@@ -816,6 +816,23 @@ button.primary {
   max-width: 1100px;
 }
 
+.oa-lenient {
+  margin: 0 0 1em;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--fg);
+  background: rgba(252, 161, 48, 0.15);
+  border: 1px solid rgb(252, 161, 48);
+  border-radius: 6px;
+}
+
+.oa-lenient ul {
+  margin: 4px 0 0;
+  padding-left: 1.4em;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
 .oa {
   --oa-get: 97, 175, 254;
   --oa-post: 73, 204, 144;

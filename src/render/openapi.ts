@@ -72,8 +72,9 @@ export async function renderDataFile(source: string, o: DataRenderOptions): Prom
   const plain = () => codeBlock(source, o.format);
 
   let doc: unknown;
+  let warning: DataParseError | undefined;
   try {
-    doc = parseData(source, o.format);
+    ({ value: doc, warning } = parseData(source, o.format));
   } catch (e) {
     // Rozbity OpenAPI soubor chce videt chybu, jiny YAML/JSON staci jako kod
     if (!looksLikeOpenApi(source)) return { html: plain(), lazy };
@@ -89,7 +90,19 @@ export async function renderDataFile(source: string, o: DataRenderOptions): Prom
 
   const resolver = new RefResolver(doc, o.path);
   if (o.read) await resolver.loadExternal(o.read);
-  return { html: new SpecRenderer(doc, resolver, lazy).render(), lazy };
+  const warnings = [
+    ...(warning ? [{ path: '', error: warning }] : []),
+    ...resolver.warnings,
+  ].map(({ path, error }) => {
+    const file = path ? `${esc(path.split(/[\\/]/).pop())}: ` : '';
+    const where = error.line ? `řádek ${error.line} – ` : '';
+    return `<li>${file}${where}${esc(error.message)}</li>`;
+  });
+  const banner = warnings.length
+    ? `<div class="oa-lenient"><strong>Soubor není striktně validní YAML.</strong> Zobrazeno tolerantně, stejně jako ve Swagger UI. ` +
+      `Jiné nástroje (validátory, generátory kódu) ho můžou odmítnout.<ul>${warnings.join('')}</ul></div>`
+    : '';
+  return { html: banner + new SpecRenderer(doc, resolver, lazy).render(), lazy };
 }
 
 /* ------------------------------------------------------------------ */
@@ -117,7 +130,7 @@ class SpecRenderer {
     private readonly refs: RefResolver,
     private readonly lazy: Lazy,
   ) {
-    this.swagger2 = typeof spec.openapi !== 'string';
+    this.swagger2 = spec.openapi == null;
     this.root = refs.rootPath;
   }
 
