@@ -6,9 +6,18 @@ use std::time::Duration;
 use serde::Serialize;
 use tauri::{Emitter, Manager, State};
 
-/// Cesta predana pres argv, nez se stihl nacist frontend.
+/// Soubory k otevreni, ktere prisly driv, nez si je frontend vyzvedl:
+/// z argv (Windows) nebo z Finderu pres Apple Event (macOS).
+/// `ready` = frontend uz zavolal take_pending_file a posloucha `open-file`,
+/// dalsi soubory se mu tedy posilaji rovnou udalosti.
 #[derive(Default)]
-struct PendingFile(Mutex<Option<String>>);
+struct PendingFile(Mutex<Pending>);
+
+#[derive(Default)]
+struct Pending {
+    paths: Vec<String>,
+    ready: bool,
+}
 
 #[derive(Serialize)]
 struct LoadedFile {
@@ -127,9 +136,43 @@ async fn plantuml_check(url: String) -> Result<Option<PlantUmlError>, String> {
     Ok(Some(PlantUmlError { line, message }))
 }
 
+/// Frontend zavola jednou pri startu, az po registraci posluchace `open-file`.
+/// Prvni soubor vrati, pripadne dalsi (vic souboru naraz z Finderu) posle
+/// udalosti.
 #[tauri::command]
-fn take_pending_file(state: State<'_, PendingFile>) -> Option<String> {
-    state.0.lock().ok().and_then(|mut guard| guard.take())
+fn take_pending_file(app: tauri::AppHandle, state: State<'_, PendingFile>) -> Option<String> {
+    let paths = match state.0.lock() {
+        Ok(mut guard) => {
+            guard.ready = true;
+            std::mem::take(&mut guard.paths)
+        }
+        Err(_) => return None,
+    };
+    let mut paths = paths.into_iter();
+    let first = paths.next();
+    for path in paths {
+        let _ = app.emit("open-file", path);
+    }
+    first
+}
+
+/// Soubor otevreny za behu: frontend uz posloucha -> udalost, jinak do fronty.
+#[cfg(target_os = "macos")]
+fn open_or_queue(app: &tauri::AppHandle, path: String) {
+    let state = app.state::<PendingFile>();
+    let Ok(mut guard) = state.0.lock() else {
+        return;
+    };
+    if guard.ready {
+        drop(guard);
+        let _ = app.emit("open-file", path);
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.set_focus();
+            let _ = window.unminimize();
+        }
+    } else {
+        guard.paths.push(path);
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -160,7 +203,7 @@ pub fn run() {
             if let Some(path) = path_from_args(&args) {
                 if let Some(state) = app.try_state::<PendingFile>() {
                     if let Ok(mut guard) = state.0.lock() {
-                        *guard = Some(path);
+                        guard.paths.push(path);
                     }
                 }
             }
@@ -172,6 +215,21 @@ pub fn run() {
             plantuml_check,
             take_pending_file
         ])
-        .run(tauri::generate_context!())
-        .expect("chyba při startu aplikace");
+        .build(tauri::generate_context!())
+        .expect("chyba při startu aplikace")
+        .run(|_app, _event| {
+            // macOS nepredava soubor z Finderu (dvojklik, Otevrit v aplikaci)
+            // v argv, ale Apple Eventem, ktery Tauri hlasi jako RunEvent::Opened.
+            // Prichazi pri studenem startu i za behu.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Opened { urls } = _event {
+                for url in urls {
+                    if let Ok(path) = url.to_file_path() {
+                        if path.is_file() {
+                            open_or_queue(_app, path.to_string_lossy().into_owned());
+                        }
+                    }
+                }
+            }
+        });
 }

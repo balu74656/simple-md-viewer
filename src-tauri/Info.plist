@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Doplni Info.plist, ktere Tauri vygeneruje pro macOS (jen macOS, Windows ho ignoruje).
+
+  Tauri slucuje jen klice nejvyssi urovne: CFBundleDocumentTypes odsud PREPISE
+  cele pole vygenerovane z bundle.fileAssociations v tauri.conf.json. Proto tu
+  jsou vsechny typy znovu, navic s CFBundleTypeIconFile (ikona podle typu ve
+  Finderu), kterou fileAssociations nastavit neumi.
+
+  Pri zmene fileAssociations (pripony, name) uprav i tenhle soubor.
+  Soubory .icns kopiruje do Contents/Resources bundle.macOS.files
+  v tauri.macos.conf.json. Zdroj ikon: scripts/build-file-icons.mjs.
+-->
+<plist version="1.0">
+<dict>
+  <key>CFBundleDocumentTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeName</key>
+      <string>Markdown Document</string>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>md</string>
+        <string>markdown</string>
+        <string>mdown</string>
+        <string>mkd</string>
+      </array>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>LSHandlerRank</key>
+      <string>Default</string>
+      <key>CFBundleTypeIconFile</key>
+      <string>md.icns</string>
+    </dict>
+    <dict>
+      <key>CFBundleTypeName</key>
+      <string>PlantUML Diagram</string>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>puml</string>
+        <string>plantuml</string>
+        <string>pu</string>
+        <string>iuml</string>
+      </array>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>LSHandlerRank</key>
+      <string>Default</string>
+      <key>CFBundleTypeIconFile</key>
+      <string>puml.icns</string>
+    </dict>
+    <dict>
+      <key>CFBundleTypeName</key>
+      <string>YAML Document</string>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>yaml</string>
+        <string>yml</string>
+      </array>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>LSHandlerRank</key>
+      <string>Default</string>
+      <key>CFBundleTypeIconFile</key>
+      <string>yaml.icns</string>
+    </dict>
+    <dict>
+      <key>CFBundleTypeName</key>
+      <string>JSON Document</string>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>json</string>
+      </array>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>LSHandlerRank</key>
+      <string>Default</string>
+      <key>CFBundleTypeIconFile</key>
+      <string>json.icns</string>
+    </dict>
+  </array>
+</dict>
+</plist>

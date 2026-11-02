@@ -3,7 +3,7 @@
 [![nejnovější verze](https://img.shields.io/github/v/release/balu74656/simple-md-viewer?label=ke%20sta%C5%BEen%C3%AD&color=2563eb)](https://github.com/balu74656/simple-md-viewer/releases/latest)
 [![check](https://github.com/balu74656/simple-md-viewer/actions/workflows/check.yml/badge.svg)](https://github.com/balu74656/simple-md-viewer/actions/workflows/check.yml)
 
-Jednoduchý Markdown viewer/editor pro Windows. Postavený na **Tauri 2** (WebView2),
+Jednoduchý Markdown viewer/editor pro Windows a macOS. Postavený na **Tauri 2** (WebView2, na Macu WebKit),
 takže se registruje jako nativní aplikace pro `.md` soubory a jde nastavit jako výchozí.
 
 Zobrazí Mermaid i PlantUML diagramy, matematiku, zvýrazní syntaxi — a hlavně to
@@ -28,6 +28,24 @@ emulaci, ale pomaleji a s vyšší spotřebou.
 
 Instalátor **není podepsaný certifikátem**, takže SmartScreen při prvním spuštění
 upozorní na neznámého vydavatele — **Další informace → Přesto spustit**.
+
+### macOS
+
+Pro Macy s Apple Silicon (M1 a novější, macOS 11+) je v release
+`MD.Viewer_x.y.z_aarch64.dmg`. Otevři ho a přetáhni **MD Viewer** do Aplikací.
+Verze pro Intel Macy se nestaví.
+
+Aplikace **není podepsaná ani notarizovaná** u Applu. Při prvním spuštění
+macOS hlásí, že ji nemůže ověřit: zavři hlášku (**Hotovo**), pak
+**Nastavení systému → Soukromí a zabezpečení → Přesto otevřít**. Nebo jednou
+v Terminálu:
+
+```sh
+xattr -dr com.apple.quarantine "/Applications/MD Viewer.app"
+```
+
+Výchozí aplikace pro `.md` na Macu: Finder → pravý klik na soubor →
+**Informace** → **Otevřít v aplikaci** → MD Viewer → **Změnit vše…**
 
 Po instalaci si aplikaci [nastav jako výchozí pro `.md`](#nastavení-jako-výchozí-aplikace-pro-md).
 Pro PlantUML diagramy ještě doplň v **Nastavení** URL svého serveru — stažený
@@ -83,7 +101,7 @@ nastaveném PlantUML serveru; chybný řádek se podtrhne a označí v okraji, t
 chyby je v tooltipu. Ve stavovém řádku je `PlantUML OK` nebo číslo řádku
 s chybou — klik na něj skočí na chybu. Dotaz jde přes Rust (`plantuml_check`),
 protože server chybu hlásí v hlavičkách `X-PlantUML-Diagram-Error(-Line)`,
-které WebView kvůli CORS nepřečte. Certifikáty se berou z Windows úložiště,
+které WebView kvůli CORS nepřečte. Certifikáty se berou ze systémového úložiště (Windows, na Macu Klíčenka),
 takže projde i firemní CA.
 
 Zalamování dlouhých řádků se přepíná v **Nastavení** — vypnuté se hodí na dokumenty

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "targets": [
+      "app",
+      "dmg"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns"
+    ],
+    "resources": [],
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "signingIdentity": "-",
+      "hardenedRuntime": false,
+      "files": {
+        "Resources/md.icns": "icons/filetypes/md.icns",
+        "Resources/puml.icns": "icons/filetypes/puml.icns",
+        "Resources/yaml.icns": "icons/filetypes/yaml.icns",
+        "Resources/json.icns": "icons/filetypes/json.icns"
+      }
+    }
+  }
+}

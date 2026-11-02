@@ -6,6 +6,22 @@ verzování ze [semver](https://semver.org/lang/cs/).
 Historie Gitu začíná u 0.3.0 — starší verze jsou zaznamenané zpětně,
 jejich zdrojový kód v repozitáři není.
 
+## [0.8.0]
+
+### Přidáno
+
+- **Verze pro macOS (Apple Silicon).** Release obsahuje `MD.Viewer_*_aarch64.dmg`
+  pro Macy s čipem M1 a novějším (macOS 11+). Aplikace není podepsaná ani
+  notarizovaná, první spuštění je potřeba povolit v Nastavení systému →
+  Soukromí a zabezpečení.
+- Na macOS se soubor otevřený z Finderu (dvojklik, Otevřít v aplikaci,
+  přetažení na ikonu v Docku) načte do okna. Finder cestu neposílá
+  v příkazové řádce jako Windows, ale Apple Eventem.
+- Ikony podle typu souboru i ve Finderu (stejné kresby jako ve Windows,
+  `.icns`), ikona aplikace `icon.icns`.
+- U pull requestů, které mění `src-tauri/`, se staví zkušební `.dmg`
+  (workflow `macos-build`) ke stažení z běhu.
+
 ## [0.7.0]
 
 ### Přidáno

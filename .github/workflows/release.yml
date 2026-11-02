@@ -1,6 +1,7 @@
 name: release
 
-# Instalator se stavi z tagu, zvlast pro ARM64 a x64. Dve cesty k vydani:
+# Instalator se stavi z tagu: Windows ARM64, Windows x64 a macOS Apple Silicon.
+# Dve cesty k vydani:
 #  - Actions -> release -> Run workflow (na main): verze se vezme z package.json,
 #    workflow sam vytvori tag v<verze> na aktualnim main a postavi instalatory.
 #  - Push tagu v* rucne (puvodni postup), napr. git tag -a v0.5.1 && git push origin v0.5.1
@@ -57,19 +58,23 @@ jobs:
     needs: tag
 
     strategy:
-      # Oba joby zakladaji tentyz Release. Paralelne by se o nej prali,
-      # serazene za sebou druhy jen prida svuj instalator k existujicimu.
+      # Vsechny joby zakladaji tentyz Release. Paralelne by se o nej prali,
+      # serazene za sebou dalsi jen prida svuj instalator k existujicimu.
       max-parallel: 1
-      # Kdyz spadne jedna architektura, druhy instalator at je stejne k dispozici.
+      # Kdyz spadne jedna platforma, ostatni instalatory at jsou stejne k dispozici.
       fail-fast: false
       # Poradi v include = poradi buildu (max-parallel: 1). ARM64 jde prvni,
-      # autor ho pouziva sam a chce ho mit driv.
+      # autor ho pouziva sam a chce ho mit driv. macOS na konci: jen Apple
+      # Silicon (macos-latest je arm64), nativni build, nepodepsany (ad-hoc).
+      # Konfigurace pro macOS: src-tauri/tauri.macos.conf.json + Info.plist.
       matrix:
         include:
           - runner: windows-11-arm
             arch: arm64
           - runner: windows-latest
             arch: x64
+          - runner: macos-latest
+            arch: macos-arm64
 
     runs-on: ${{ matrix.runner }}
 
@@ -105,7 +110,7 @@ jobs:
           tagName: ${{ needs.tag.outputs.name }}
           releaseName: MD Viewer ${{ needs.tag.outputs.name }}
           releaseBody: |
-            Instalátory pro Windows — vyber podle architektury procesoru:
+            ### Windows — vyber podle architektury procesoru
 
             - **x64** (Intel / AMD) — `MD.Viewer_*_x64-setup.exe`
             - **ARM64** (Snapdragon a spol.) — `MD.Viewer_*_arm64-setup.exe`
@@ -118,6 +123,19 @@ jobs:
 
             Po instalaci: pravý klik na `.md` → Otevřít v programu → MD Viewer
             → Vždy používat tuto aplikaci.
+
+            ### macOS (Apple Silicon, M1 a novější, macOS 11+)
+
+            - `MD.Viewer_*_aarch64.dmg` — otevři a přetáhni **MD Viewer** do Aplikací.
+
+            Aplikace není podepsaná ani notarizovaná u Applu. Při prvním spuštění
+            macOS hlásí, že ji nemůže ověřit: dej **Hotovo**, pak **Nastavení
+            systému → Soukromí a zabezpečení → Přesto otevřít** (dole u hlášky
+            o MD Viewer). Alternativně jednou v Terminálu:
+            `xattr -dr com.apple.quarantine "/Applications/MD Viewer.app"`
+
+            Výchozí aplikace pro `.md`: Finder → pravý klik → Informace →
+            Otevřít v aplikaci → MD Viewer → Změnit vše…
 
             Změny v [CHANGELOG.md](https://github.com/balu74656/simple-md-viewer/blob/main/CHANGELOG.md).
           releaseDraft: false
