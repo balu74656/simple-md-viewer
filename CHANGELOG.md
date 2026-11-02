@@ -6,6 +6,17 @@ verzování ze [semver](https://semver.org/lang/cs/).
 Historie Gitu začíná u 0.3.0 — starší verze jsou zaznamenané zpětně,
 jejich zdrojový kód v repozitáři není.
 
+## [0.7.0]
+
+### Přidáno
+
+- **Vlastní ikony pro typy souborů.** V Průzkumníku má každý asociovaný typ
+  svou ikonu ve stylu aplikace: bílý list s dlaždicí aplikace v barvě typu.
+  Markdown modrá (M↓), PlantUML fialová (sekvenční diagram), YAML zelená
+  (seznam operací jako v OpenAPI náhledu), JSON červená (`{ }`). Alternativní
+  přípony (`.markdown`, `.pu`, `.iuml`, …) dostanou ikonu své skupiny.
+  Ikony nastavuje instalátor (NSIS hook), zdroj je `scripts/build-file-icons.mjs`.
+
 ## [0.6.1]
 
 ### Opraveno
