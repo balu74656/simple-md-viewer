@@ -7,7 +7,8 @@
  * Zdrojem je tenhle skript: SVG kresby jsou nize. Vystup jde do
  * src-tauri/icons/filetypes/ a commituje se (build ho nespousti):
  *   <typ>.svg          - velka varianta pro nahled
- *   <typ>.ico          - 16, 20, 24, 32, 40, 48, 64, 256 px (PNG uvnitr ICO)
+ *   <typ>.ico          - 16, 20, 24, 32, 40, 48, 64, 256 px (PNG uvnitr ICO), Windows
+ *   <typ>.icns         - 16 az 1024 px (PNG uvnitr ICNS), macOS
  *   preview.png        - prehled vsech velikosti na svetlem i tmavem pozadi
  *
  * Rasterizuje se pres Chromium z balicku `playwright`, ktery v projektu
@@ -15,6 +16,7 @@
  * kde uz je, napr. cloud sessions). Text pripony pouziva font Inter.
  *
  * Jak se ikony dostanou do registru: src-tauri/windows/hooks.nsh.
+ * Na macOS: CFBundleTypeIconFile v src-tauri/Info.plist + bundle.macOS.files.
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -127,6 +129,36 @@ function ico(pngs) {
   return Buffer.concat([head, ...pngs.map((p) => p.data)]);
 }
 
+// ICNS s PNG obrazky. Typ bloku urcuje velikost (a Retina variantu).
+const ICNS_TYPES = [
+  ['icp4', 16],
+  ['icp5', 32],
+  ['ic11', 32], // 16@2x
+  ['ic12', 64], // 32@2x
+  ['ic07', 128],
+  ['ic13', 256], // 128@2x
+  ['ic08', 256],
+  ['ic14', 512], // 256@2x
+  ['ic09', 512],
+  ['ic10', 1024], // 512@2x
+];
+const ICNS_SIZES = [...new Set(ICNS_TYPES.map(([, px]) => px))];
+const variantForMac = (px) => (px >= 64 ? 'l' : px >= 32 ? 's' : 'xs');
+
+function icns(pngBySize) {
+  const blocks = ICNS_TYPES.map(([type, px]) => {
+    const data = pngBySize.get(px);
+    const h = Buffer.alloc(8);
+    h.write(type, 0, 'ascii');
+    h.writeUInt32BE(8 + data.length, 4);
+    return Buffer.concat([h, data]);
+  });
+  const head = Buffer.alloc(8);
+  head.write('icns', 0, 'ascii');
+  head.writeUInt32BE(8 + blocks.reduce((n, b) => n + b.length, 0), 4);
+  return Buffer.concat([head, ...blocks]);
+}
+
 async function main() {
   const { chromium } = require('playwright');
   mkdirSync(OUT, { recursive: true });
@@ -149,6 +181,11 @@ async function main() {
     for (const px of SIZES) pngs.push({ px, data: await render(icon(type, variantFor(px)), px) });
     writeFileSync(join(OUT, `${type}.ico`), ico(pngs));
     console.log(`${type}.ico`, SIZES.join(', '));
+
+    const mac = new Map();
+    for (const px of ICNS_SIZES) mac.set(px, await render(icon(type, variantForMac(px)), px));
+    writeFileSync(join(OUT, `${type}.icns`), icns(mac));
+    console.log(`${type}.icns`, ICNS_SIZES.join(', '));
   }
 
   // Nahled: kazda velikost v realnych pixelech, svetle a tmave pozadi
