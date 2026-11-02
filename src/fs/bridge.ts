@@ -127,7 +127,7 @@ export async function pickSavePath(defaultPath?: string): Promise<string | null>
   return handle.name;
 }
 
-/** Cesta predana pres argv pri studenem startu; jednorazove odebere z fronty. */
+/** Soubor predany pri studenem startu (argv na Windows, Finder na macOS); jednorazove odebere z fronty. */
 export async function takePendingFile(): Promise<string | null> {
   if (!isTauri) {
     // Pro vyvoj: ?file=... nacte ukazkovy dokument z dev serveru

@@ -1,0 +1,54 @@
+name: macos-build
+
+# Zkusebni build pro macOS (Apple Silicon) u pull requestu, ktery meni Rust,
+# konfiguraci Tauri nebo ikony. Nic nevydava: .dmg se jen nahraje jako
+# artefakt runu, aby se dal pred mergem stahnout a vyzkouset na Macu.
+# Vydani dela release workflow.
+on:
+  pull_request:
+    paths:
+      - 'src-tauri/**'
+      - '.github/workflows/macos-build.yml'
+  workflow_dispatch:
+
+jobs:
+  dmg:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+          key: macos-arm64
+
+      - run: npm ci
+
+      - run: npx tauri build
+
+      # Kontrola, ze se do Info.plist dostaly typy souboru s ikonami
+      # a ze .icns jsou v Contents/Resources
+      - name: Kontrola bundle
+        run: |
+          APP="src-tauri/target/release/bundle/macos/MD Viewer.app"
+          plutil -p "$APP/Contents/Info.plist"
+          ls -la "$APP/Contents/Resources"
+          for t in md puml yaml json; do
+            test -f "$APP/Contents/Resources/$t.icns" || { echo "::error::Chybi $t.icns"; exit 1; }
+          done
+          test "$(plutil -extract CFBundleDocumentTypes.0.CFBundleTypeIconFile raw "$APP/Contents/Info.plist")" = md.icns
+          codesign -dv "$APP" 2>&1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: md-viewer-macos-arm64
+          path: src-tauri/target/release/bundle/dmg/*.dmg
+          if-no-files-found: error
